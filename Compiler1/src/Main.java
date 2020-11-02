@@ -52,8 +52,14 @@ public class Main {
                     } else {
                         throw new IllegalArgumentException("unknown rename type " + type);
                     }
-
-                    throw new UnsupportedOperationException("TODO - Ex. 1");
+                    //my add
+                    if(isMethod) {
+                    	ResolveMethod resv=new ResolveMethod(Integer.parseInt(originalLine),originalName);
+                    	resv.visit(prog);
+                    	System.out.println(resv.getLineNumber());
+                    	System.out.println(resv.getName());
+                    	
+                    }
 
                 } else {
                     throw new IllegalArgumentException("unknown command line action " + action);
