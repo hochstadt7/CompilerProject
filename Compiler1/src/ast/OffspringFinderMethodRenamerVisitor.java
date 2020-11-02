@@ -6,18 +6,20 @@ public class OffspringFinderMethodRenamerVisitor implements Visitor {
 	public int initial;
 	public String origMethodName, newMethodName;
 	public HashSet<String> OffspringNames;
+	private boolean first;
 	
 	public OffspringFinderMethodRenamerVisitor(int _initial, String _origMethodName, String _newMethodName) {
 		initial = _initial;
 		origMethodName = _origMethodName;
 		newMethodName = _newMethodName;
 		OffspringNames = new HashSet<String>();
+		first = true;
 	}
 
 	@Override
 	public void visit(Program program) {
-		OffspringNames.add(program.classDecls().get(initial).name());
-		for (int i = initial + 1; i < program.classDecls().size(); i++) {
+		first = true;
+		for (int i = initial; i < program.classDecls().size(); i++) {
 			program.classDecls().get(i).accept(this);
 		}
 	}
@@ -25,10 +27,7 @@ public class OffspringFinderMethodRenamerVisitor implements Visitor {
 	@Override
 	public void visit(ClassDecl classDecl) {
 		String fatherName = classDecl.superName();
-		if (fatherName == null) {
-			return;
-		}
-		if (OffspringNames.contains(fatherName)) {
+		if (first || (fatherName != null && OffspringNames.contains(fatherName))) {
 			OffspringNames.add(classDecl.name());
 			for (MethodDecl decl : classDecl.methoddecls()) {
 				decl.accept(this);
