@@ -4,7 +4,7 @@ public class AncestorFinderVisitor implements Visitor {
 	public int classIndex;
 	public String methodName;
 	private String fatherName;
-	boolean first, done, found;
+	private boolean first, done, found;
 	
 	public void visit(Program program) {
 		first = true;
@@ -13,7 +13,6 @@ public class AncestorFinderVisitor implements Visitor {
 			program.classDecls().get(i).accept(this);
 			if (found) {
 				classIndex = i;
-				found = false;
 			}
 			if (done) {
 				break;
@@ -22,7 +21,8 @@ public class AncestorFinderVisitor implements Visitor {
 		}
 	}
     public void visit(ClassDecl classDecl) {
-    	if (first || classDecl.name() == fatherName) {
+    	found = false;
+    	if (first || classDecl.name().equals(fatherName)) {
     		for (MethodDecl decl : classDecl.methoddecls()) {
     			decl.accept(this);
     			if (found) {
@@ -30,14 +30,14 @@ public class AncestorFinderVisitor implements Visitor {
     			}
     		}
     		fatherName = classDecl.superName();
-    		done = !found || fatherName == null;
+    		done = fatherName == null;
     	}
     }
     public void visit(MainClass mainClass) {
     	
     }
     public void visit(MethodDecl methodDecl) {
-    	if (methodDecl.name() == methodName) {
+    	if (methodDecl.name().equals(methodName)) {
     		found = true;
     	}
     }
