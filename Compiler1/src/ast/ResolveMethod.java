@@ -4,54 +4,48 @@ import java.util.List;
 
 public class ResolveMethod implements Visitor  {
 	
-	private int lineNumber;
-	private String name;
-	private ClassDecl findClass;
-	private MethodDecl findMethod;// if roee doesnt need it- remove
+	public int lineNumber;
+	public String name;
+	public int classIndex;
+	
+	private int counter=0;
+	private boolean found=false;
 	
 	
 	public ResolveMethod(int linenumber,String name) {
 		
 		this.lineNumber=linenumber;
 		this.name=name;
-		this.findClass=null;
-		this.findMethod=null;
-	}
-
-	public int getLineNumber() {
-		return this.lineNumber;
-	}
-
-	public void setLineNumber(int lineNumber) {
-		this.lineNumber = lineNumber;
-	}
-
-	public String getName() {
-		return name;
-	}
-
-	public void setName(String name) {
-		this.name = name;
+		this.classIndex=0;
 	}
 
 	@Override
 	public void visit(Program program) {
+		
 		for (ClassDecl classdecl : program.classDecls()) {
+			if(!found) {
             classdecl.accept(this);
+            counter++;
+			}
+			else {
+				return;
+			}
         }
+		this.classIndex=-1;//not found
 		
 	}
 
 	@Override
 	public void visit(ClassDecl classDecl) {
-			
+		
 		for(MethodDecl methoddecls:classDecl.methoddecls()) {
-			if(methoddecls.lineNumber==this.lineNumber&&methoddecls.name()==this.name)
+			if(methoddecls.lineNumber==this.lineNumber&&methoddecls.name().equals(this.name))
 			{
-				this.findClass=classDecl;
-				this.findMethod=methoddecls;
+				this.classIndex=counter;
+				found=true;
 				return;
 			}
+			
 		}
 				
 	}

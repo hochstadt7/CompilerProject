@@ -56,9 +56,7 @@ public class Main {
                     if(isMethod) {
                     	ResolveMethod resv=new ResolveMethod(Integer.parseInt(originalLine),originalName);
                     	resv.visit(prog);
-                    	System.out.println(resv.getLineNumber());
-                    	System.out.println(resv.getName());
-                    	
+                 
                     }
 
                 } else {
