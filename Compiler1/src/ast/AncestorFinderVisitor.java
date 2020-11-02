@@ -6,6 +6,12 @@ public class AncestorFinderVisitor implements Visitor {
 	private String fatherName;
 	private boolean first, done, found;
 	
+	public AncestorFinderVisitor(int _classIndex, String _methodName) {
+		classIndex = _classIndex;
+		methodName = _methodName;
+		first = true;
+	}
+	
 	public void visit(Program program) {
 		first = true;
 		done = false;
