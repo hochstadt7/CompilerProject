@@ -21,6 +21,7 @@ public class OffspringFinderMethodRenamerVisitor implements Visitor {
 		first = true;
 		for (int i = initial; i < program.classDecls().size(); i++) {
 			program.classDecls().get(i).accept(this);
+			first = false;
 		}
 	}
 
