@@ -2,6 +2,8 @@ package ast;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
+import java.util.Map.Entry;
 
 public class SymbolTable {
 	
@@ -36,5 +38,17 @@ public class SymbolTable {
 	public void setParentSymbolTable(SymbolTable parentSymbolTable) {
 		  this.parent = parentSymbolTable;
 	  }
+	
+public String toString() {
+		
+		System.out.println("Symbol table content:\n");
+		Set<Entry<String,Symbol>> symbolContent=this.entries.entrySet();
+		for (Map.Entry<String, Symbol> it: symbolContent) {
+			System.out.println("My name is: "+it.getKey()+" and my type:\n");
+			System.out.println(it.getValue());
+		}
+		
+		return "";
+	}
 
 }

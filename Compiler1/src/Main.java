@@ -52,12 +52,11 @@ public class Main {
                     } else {
                         throw new IllegalArgumentException("unknown rename type " + type);
                     }
+                    
                     //my add
-                    if(isMethod) {
-                    	ResolveMethod resv=new ResolveMethod(Integer.parseInt(originalLine),originalName);
-                    	resv.visit(prog);
-                 
-                    }
+                    SymbolTableBuilder symbolTableBuilder=new SymbolTableBuilder();
+                    symbolTableBuilder.visit(prog);
+                    System.out.println(symbolTableBuilder);
 
                 } else {
                     throw new IllegalArgumentException("unknown command line action " + action);
