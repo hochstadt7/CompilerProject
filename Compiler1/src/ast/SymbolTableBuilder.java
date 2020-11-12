@@ -9,16 +9,15 @@ import java.util.Set;
 
 public class SymbolTableBuilder implements Visitor {
 
-	private Map<AstNode,SymbolTable> myMethods;
-	private Map<AstNode,SymbolTable> myVariables;
-	private Map<String,ArrayList<SymbolTable>> className;
+	public Map<AstNode,SymbolTable> myMethods;
+	public Map<AstNode,SymbolTable> myVariables;
 	
 	private SymbolTable currentSymbolTableVar; 
 	private SymbolTable ParentSymbolTableVar;
 	private SymbolTable currentSymbolTableMeth; 
 	private SymbolTable ParentSymbolTableMeth;
 	
-	private String refType="";
+	private String refType=""; /* type of the current variable */
 	
 	public SymbolTableBuilder() {
 		this.currentSymbolTableVar = null;
@@ -28,48 +27,53 @@ public class SymbolTableBuilder implements Visitor {
 		
 		this.myMethods=new HashMap<AstNode,SymbolTable>();
 		this.myVariables=new HashMap<AstNode,SymbolTable>();
-		this.className=new HashMap<String,ArrayList<SymbolTable>>();
 	}
 	
-	/*build the classes's symbol table hirerarchy according to the inheritence*/
-	public void setSymbolTableClassHirerachy(Program program) {
+	/* build the classes's symbol table hierarchy according to the inheritance */
+	public void setSymbolTableClassHirerachy(Program program,Map<AstNode,ArrayList<SymbolTable>> classAst,Map<String,ArrayList<SymbolTable>> classNames) {
 		for (ClassDecl classDecl:program.classDecls()) {
 			String parentName=classDecl.superName();
 			if(parentName!=null) {	
-				myVariables.get(classDecl).setParentSymbolTable(className.get(parentName).get(0));
-				myMethods.get(classDecl).setParentSymbolTable(className.get(parentName).get(1));
+				classAst.get(classDecl).get(0).setParentSymbolTable(classNames.get(parentName).get(0));
+				classAst.get(classDecl).get(1).setParentSymbolTable(classNames.get(parentName).get(1));
 			}
 		}
 		
 	}
 	
 	
-	/*here start the visitor*/
+	/* here start the visitor */
 	@Override
 	public void visit(Program program) {
+		
+		Map<AstNode,ArrayList<SymbolTable>> classAst=new HashMap<AstNode,ArrayList<SymbolTable>>();
+		Map<String,ArrayList<SymbolTable>> classNames=new HashMap<String,ArrayList<SymbolTable>>();
 		
 		if(program.mainClass()!=null) {
 			program.mainClass().accept(this);
 		}
 		
 		for (ClassDecl cls : program.classDecls()) {	
+			
+			SymbolTable currVar=new SymbolTable();
+			SymbolTable currMeth=new SymbolTable();
+		
+			this.currentSymbolTableVar=currVar;
+			currVar.setParentSymbolTable(this.ParentSymbolTableVar);
+			this.currentSymbolTableMeth=currMeth;
+			currMeth.setParentSymbolTable(this.ParentSymbolTableMeth);
+			
+			classAst.put(cls,new ArrayList<SymbolTable>(Arrays.asList(this.currentSymbolTableVar,this.currentSymbolTableMeth))); // prepare hashmaps for setSymbolTableClassHirerachy() call
+			classNames.put(cls.name(),new ArrayList<SymbolTable>(Arrays.asList(this.currentSymbolTableVar,this.currentSymbolTableMeth)));
+			
 			cls.accept(this);
 		}
 		
-		setSymbolTableClassHirerachy(program);
+		setSymbolTableClassHirerachy(program,classAst,classNames);
 	}
 	
 	@Override
 	public void visit(ClassDecl classDecl) {
-		
-		SymbolTable currVar=new SymbolTable();
-		SymbolTable currMeth=new SymbolTable();
-	
-		this.currentSymbolTableVar=currVar;
-		currVar.setParentSymbolTable(this.ParentSymbolTableVar);
-		this.currentSymbolTableMeth=currMeth;
-		currMeth.setParentSymbolTable(this.ParentSymbolTableMeth);
-		className.put(classDecl.name(),new ArrayList<SymbolTable>(Arrays.asList(this.currentSymbolTableVar,this.currentSymbolTableMeth))) ;// set className mapping to symbol tables
 		
 		for (VarDecl vDecl: classDecl.fields()) {
 		vDecl.accept(this);
@@ -91,8 +95,8 @@ public class SymbolTableBuilder implements Visitor {
 		this.currentSymbolTableMeth=currMeth;
 		currMeth.setParentSymbolTable(this.ParentSymbolTableMeth);
 		
-		myVariables.put(mainClass,this.currentSymbolTableVar );// is it ok??????
-		this.currentSymbolTableVar.addEntery(mainClass.name(), new Symbol("String-array"));//????
+		myVariables.put(mainClass,this.currentSymbolTableVar );// is it ok?
+		this.currentSymbolTableVar.addEntery(mainClass.name(), new Symbol("String-array"));
 		
 		if(mainClass.mainStatement()!=null) {
 			mainClass.mainStatement().accept(this);
@@ -109,8 +113,8 @@ public class SymbolTableBuilder implements Visitor {
 		this.currentSymbolTableMeth.addEntery(methodDecl.name(), new Symbol(this.refType));
 		}
 		
-		SymbolTable tempVar=this.currentSymbolTableVar;//to remember pointers when we go back to the upper scope
-		SymbolTable tempMeth=this.currentSymbolTableMeth;//to remember pointers when we go back to the upper scope
+		SymbolTable tempVar=this.currentSymbolTableVar;
+		SymbolTable tempMeth=this.currentSymbolTableMeth;
 		SymbolTable currVar=new SymbolTable();
 		SymbolTable currMeth=new SymbolTable();
 		
@@ -134,6 +138,7 @@ public class SymbolTableBuilder implements Visitor {
 		if(methodDecl.ret()!=null) {
 			myVariables.put(methodDecl.ret(), this.currentSymbolTableVar);	
 		}
+		/* retrieve pointers for upper scope */
 		this.currentSymbolTableVar=tempVar;
 		this.ParentSymbolTableVar=tempVar.getParentSymbolTable();
 		this.currentSymbolTableMeth=tempMeth;
@@ -210,7 +215,6 @@ public class SymbolTableBuilder implements Visitor {
 		this.currentSymbolTableMeth=currMeth;
 		currMeth.setParentSymbolTable(this.ParentSymbolTableMeth);
 		
-		//check this
 		if(whileStatement.cond()!=null)
 			whileStatement.cond().accept(this);
 		if(whileStatement.body()!=null)
@@ -244,7 +248,7 @@ public class SymbolTableBuilder implements Visitor {
 		if(assignArrayStatement.rv()!=null) {
 		assignArrayStatement.rv().accept(this);
 		}
-		if(assignArrayStatement.index()!=null) {//where do i insert index to the hashmap (cuz maybe i need). what is this object?
+		if(assignArrayStatement.index()!=null) {// make sure this isn't an object i need to insert to hashmap
 			assignArrayStatement.index().accept(this);
 		}
 	}
@@ -352,9 +356,8 @@ public class SymbolTableBuilder implements Visitor {
 	}
 
 	@Override
-	public void visit(ThisExpr e) {// this expression needs to be in the symbol table? if so, maybe i need global variable to save what is "this"
-		myMethods.put(e, currentSymbolTableVar);
-		//if needed i will add an entery for this. i doubt.
+	public void visit(ThisExpr e) {
+		myMethods.put(e, currentSymbolTableVar); // assume doesn't need to enter into the symbol-table
 	}
 
 	@Override
@@ -412,9 +415,9 @@ public class SymbolTableBuilder implements Visitor {
 			System.out.println(it.getValue());
 		}
 		
-		System.out.println("printing methods symbol tables:");
+		System.out.println("printing methods symbol tables:\n");
 		for (Map.Entry<AstNode, SymbolTable> it: methodsSet) {
-			System.out.println("My name is: "+it.getKey()+"and my symbol table is:\n");
+			System.out.print("My name is: "+it.getKey()+"and my symbol table is: \n");
 			System.out.println(it.getValue());
 		}
 		

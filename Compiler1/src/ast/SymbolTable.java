@@ -39,6 +39,7 @@ public class SymbolTable {
 		  this.parent = parentSymbolTable;
 	  }
 	
+@Override
 public String toString() {
 		
 		System.out.println("Symbol table content:\n");

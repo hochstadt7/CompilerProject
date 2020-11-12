@@ -54,6 +54,7 @@ public class Main {
                     }
                     
                     //my add
+                    
                     SymbolTableBuilder symbolTableBuilder=new SymbolTableBuilder();
                     symbolTableBuilder.visit(prog);
                     System.out.println(symbolTableBuilder);

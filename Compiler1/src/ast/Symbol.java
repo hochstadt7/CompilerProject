@@ -12,5 +12,13 @@ public class Symbol {
 		return this.type;
 	}
 	
+	@Override
+	public String toString() {
+			
+			System.out.println(" "+this.type+" ");
+			
+			return "";
+		}
+	
 
 }
