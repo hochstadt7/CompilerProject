@@ -52,8 +52,12 @@ public class Main {
                     } else {
                         throw new IllegalArgumentException("unknown rename type " + type);
                     }
-
-                    throw new UnsupportedOperationException("TODO - Ex. 1");
+                    
+                    //my add
+                    
+                    SymbolTableBuilder symbolTableBuilder=new SymbolTableBuilder();
+                    symbolTableBuilder.visit(prog);
+                    System.out.println(symbolTableBuilder);
 
                 } else {
                     throw new IllegalArgumentException("unknown command line action " + action);
