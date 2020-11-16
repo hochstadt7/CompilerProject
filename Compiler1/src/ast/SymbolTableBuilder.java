@@ -17,8 +17,8 @@ public class SymbolTableBuilder implements Visitor {
 	private SymbolTable currentSymbolTableMeth; 
 	private SymbolTable ParentSymbolTableMeth;
 	
-	private String refType=""; /* type of the current variable */
-	private String classType="";
+	private String refType=""; /* type of the variable */
+	private String classType=""; /* current class */
 	
 	public SymbolTableBuilder() {
 		this.currentSymbolTableVar = null;
@@ -140,7 +140,7 @@ public class SymbolTableBuilder implements Visitor {
 		}
 		
 		if(methodDecl.ret()!=null) {
-			myVariables.put(methodDecl.ret(), this.currentSymbolTableVar);	
+			methodDecl.ret().accept(this);
 		}
 		/* retrieve pointers for upper scope */
 		this.currentSymbolTableVar=tempVar;
