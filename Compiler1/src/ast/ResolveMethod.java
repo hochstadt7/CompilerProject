@@ -1,7 +1,5 @@
 package ast;
 
-import java.util.List;
-
 public class ResolveMethod implements Visitor  {
 	
 	public int lineNumber;
@@ -31,7 +29,7 @@ public class ResolveMethod implements Visitor  {
 				return;
 			}
         }
-		this.classIndex=-1;//not found
+		this.classIndex=-1;/*in case not found*/
 		
 	}
 
