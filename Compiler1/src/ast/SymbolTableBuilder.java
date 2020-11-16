@@ -204,6 +204,7 @@ public class SymbolTableBuilder implements Visitor {
 		if(sysoutStatement.arg()!=null) {
 		sysoutStatement.arg().accept(this);
 		}
+		
 	}
 
 	@Override
@@ -298,7 +299,7 @@ public class SymbolTableBuilder implements Visitor {
 	if(e.ownerExpr()!=null)
 		e.ownerExpr().accept(this);
 	
-	//myMethods.put(e, this.currentSymbolTableMeth);
+	myMethods.put(e, this.currentSymbolTableMeth);
 	
 	for(Expr expr: e.actuals()) {
 		expr.accept(this);
