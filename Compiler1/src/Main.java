@@ -1,6 +1,7 @@
 import ast.*;
 
 import java.io.*;
+import java.util.HashMap;
 
 public class Main {
     public static void main(String[] args) {
@@ -57,7 +58,24 @@ public class Main {
                     
                     SymbolTableBuilder symbolTableBuilder=new SymbolTableBuilder();
                     symbolTableBuilder.visit(prog);
-                    System.out.println(symbolTableBuilder);
+                 
+                    if(isMethod) {
+                    ResolveMethod resolveMethod=new ResolveMethod(Integer.parseInt(originalLine),originalName);
+                    resolveMethod.visit(prog);
+                    AncestorFinderVisitor ancestorFinderVisitor=new AncestorFinderVisitor(resolveMethod.classIndex,originalName);
+                    ancestorFinderVisitor.visit(prog);
+                    OffspringFinderVisitor offspringFinderVisitor=new OffspringFinderVisitor(ancestorFinderVisitor.classIndex);
+                    offspringFinderVisitor.visit(prog);
+                    // might be error here- the builder for this class shouldn't create new Hashmap, but get the offspring of roey?
+                    MethodInstanceRenamer methodInstanceRenamer=new MethodInstanceRenamer(originalName,newName,(HashMap<AstNode, SymbolTable>) symbolTableBuilder.myVariables,offspringFinderVisitor.OffspringNames);
+                    methodInstanceRenamer.visit(prog);
+                    }
+                    else {
+                    	VariableInstanceRenamer variableInstanceRenamer=new VariableInstanceRenamer(originalName,newName,/*?*/);
+                    	variableInstanceRenamer.visit(/*?*/);
+                    	FieldInstanceRenamerVisitor new fieldInstanceRenamerVisitor(/*?*/,originalName,newName);
+                    }
+                    
 
                 } else {
                     throw new IllegalArgumentException("unknown command line action " + action);

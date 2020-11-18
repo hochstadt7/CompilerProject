@@ -298,7 +298,6 @@ public class SymbolTableBuilder implements Visitor {
 
 	if(e.ownerExpr()!=null)
 		e.ownerExpr().accept(this);
-	
 	myMethods.put(e, this.currentSymbolTableMeth);
 	
 	for(Expr expr: e.actuals()) {
@@ -329,6 +328,7 @@ public class SymbolTableBuilder implements Visitor {
 	public void visit(IdentifierExpr e) {
 		
 		myVariables.put(e, currentSymbolTableVar);
+		
 	}
 
 	@Override
@@ -347,7 +347,6 @@ public class SymbolTableBuilder implements Visitor {
 	@Override
 	public void visit(NewObjectExpr e) {	
 		myVariables.put(e, this.currentSymbolTableVar);
-		
 	}
 
 	@Override
