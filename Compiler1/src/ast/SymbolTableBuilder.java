@@ -9,8 +9,8 @@ import java.util.Set;
 
 public class SymbolTableBuilder implements Visitor {
 
-	public Map<AstNode,SymbolTable> myMethods;
-	public Map<AstNode,SymbolTable> myVariables;
+	public HashMap<AstNode,SymbolTable> myMethods;
+	public HashMap<AstNode,SymbolTable> myVariables;
 	
 	private SymbolTable currentSymbolTableVar; 
 	private SymbolTable ParentSymbolTableVar;
@@ -31,7 +31,7 @@ public class SymbolTableBuilder implements Visitor {
 	}
 	
 	/* build the classes's symbol table hierarchy according to the inheritance */
-	public void setSymbolTableClassHirerachy(Program program,Map<AstNode,ArrayList<SymbolTable>> classAst,Map<String,ArrayList<SymbolTable>> classNames) {
+	public void setSymbolTableClassHirerachy(Program program,HashMap<AstNode, ArrayList<SymbolTable>> classAst,HashMap<String, ArrayList<SymbolTable>> classNames) {
 		
 		for (ClassDecl classDecl:program.classDecls()) {
 			String parentName=classDecl.superName();
@@ -49,8 +49,8 @@ public class SymbolTableBuilder implements Visitor {
 	@Override
 	public void visit(Program program) {
 		
-		Map<AstNode,ArrayList<SymbolTable>> classAst=new HashMap<AstNode,ArrayList<SymbolTable>>();
-		Map<String,ArrayList<SymbolTable>> classNames=new HashMap<String,ArrayList<SymbolTable>>();
+		HashMap<AstNode,ArrayList<SymbolTable>> classAst=new HashMap<AstNode,ArrayList<SymbolTable>>();
+		HashMap<String,ArrayList<SymbolTable>> classNames=new HashMap<String,ArrayList<SymbolTable>>();
 		
 		if(program.mainClass()!=null) {
 			program.mainClass().accept(this);

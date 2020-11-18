@@ -64,13 +64,13 @@ public class Main {
                     resolveMethod.visit(prog);
                     AncestorFinderVisitor ancestorFinderVisitor=new AncestorFinderVisitor(resolveMethod.classIndex,originalName);
                     ancestorFinderVisitor.visit(prog);
-                    OffspringFinderVisitor offspringFinderVisitor=new OffspringFinderVisitor(ancestorFinderVisitor.classIndex);
+                    OffspringFinderMethodRenamerVisitor offspringFinderVisitor=new OffspringFinderMethodRenamerVisitor(ancestorFinderVisitor.classIndex, originalName, newName);
                     offspringFinderVisitor.visit(prog);
-                    // might be error here- the builder for this class shouldn't create new Hashmap, but get the offspring of roey?
-                    MethodInstanceRenamer methodInstanceRenamer=new MethodInstanceRenamer(originalName,newName,(HashMap<AstNode, SymbolTable>) symbolTableBuilder.myVariables,offspringFinderVisitor.OffspringNames);
+                    MethodInstanceRenamer methodInstanceRenamer=new MethodInstanceRenamer(originalName,newName,symbolTableBuilder.myVariables,offspringFinderVisitor.OffspringNames);
                     methodInstanceRenamer.visit(prog);
                     }
                     else {
+                    	// NEED TO GET PLACE FROM EYAL
                     	VariableInstanceRenamer variableInstanceRenamer=new VariableInstanceRenamer(originalName,newName,/*?*/);
                     	variableInstanceRenamer.visit(/*?*/);
                     	FieldInstanceRenamerVisitor new fieldInstanceRenamerVisitor(/*?*/,originalName,newName);
