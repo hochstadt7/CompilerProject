@@ -45,7 +45,4 @@ public class MethodCallExpr extends Expr {
     public List<Expr> actuals() {
         return actuals.stream().map(e -> e.e).collect(Collectors.toList());
     }
-    public void setName(String str) {
-        this.methodId = str;
-    }
 }
