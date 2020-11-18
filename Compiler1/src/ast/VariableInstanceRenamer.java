@@ -2,15 +2,18 @@ package ast;
 
 
 public class VariableInstanceRenamer implements Visitor {
-	private String origVarName, newVarName;
-	private int external;
-	private boolean is_external = true;
+	private String origVarName, newVarName;//old and new names of the var
+	private int external; //is the var declared in or out of the method (1=external)
+	private int line_found = -1; //used to check the line the decl was found in
+	
+	private int line_number; //linenumber which was passed as arg
 
 	
-	public VariableInstanceRenamer(String _origVarName, String _newVarName, int _external) {
+	public VariableInstanceRenamer(String _origVarName, String _newVarName, int _external, int _line_number) {
 		origVarName = _origVarName;
 		newVarName = _newVarName;	
 		external = _external;
+		line_number = _line_number;
 	}
 
 	@Override
@@ -37,8 +40,8 @@ public class VariableInstanceRenamer implements Visitor {
         for (VarDecl varDecl : methodDecl.vardecls()) {
             varDecl.accept(this);
         }
-        //checkif the var was overridden from outside or not of the scope
-        if((external == 0) && is_external == false || (external == 1) && is_external == true)
+        //check if the var was overridden from outside or not of the scope
+        if((external == 0) && line_found == line_number || (external == 1) && line_found == -1)
 	        for (Statement stmt : methodDecl.body()) {
 	            stmt.accept(this);
 	        }
@@ -49,8 +52,8 @@ public class VariableInstanceRenamer implements Visitor {
 	public void visit(FormalArg formalArg) {
 		if(formalArg.name().equals(origVarName))//var is formal
 		{
-			is_external = false;
-			if(external == 0)
+			line_found = formalArg.lineNumber;
+			if(external == 0 && line_found == line_number)
 				formalArg.setName(newVarName);
 		}
 
@@ -60,8 +63,8 @@ public class VariableInstanceRenamer implements Visitor {
 	public void visit(VarDecl varDecl) {
 		if(varDecl.name().equals(origVarName))//var declared inside
 		{
-			is_external = false;
-			if(external == 0)
+			line_found = varDecl.lineNumber;
+			if(external == 0 && line_found == line_number)
 				varDecl.setName(newVarName);
 		}
 
