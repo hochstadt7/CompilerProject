@@ -30,7 +30,7 @@ public class Main {
                     xmlSerializer.serialize(prog, outfilename);
                 } else if (action.equals("print")) {
                     AstPrintVisitor astPrinter = new AstPrintVisitor();
-                    astPrinter.visit(prog);
+                    prog.accept(astPrinter);
                     outFile.write(astPrinter.getString());
 
                 } else if (action.equals("semantic")) {
@@ -57,23 +57,29 @@ public class Main {
                     //my add
                     
                     SymbolTableBuilder symbolTableBuilder=new SymbolTableBuilder();
-                    symbolTableBuilder.visit(prog);
-                 
+                    prog.accept(symbolTableBuilder);
+                    int linenumber = Integer.parseInt(originalLine);
                     if(isMethod) {
-                    ResolveMethod resolveMethod=new ResolveMethod(Integer.parseInt(originalLine),originalName);
-                    resolveMethod.visit(prog);
-                    AncestorFinderVisitor ancestorFinderVisitor=new AncestorFinderVisitor(resolveMethod.classIndex,originalName);
-                    ancestorFinderVisitor.visit(prog);
-                    OffspringFinderMethodRenamerVisitor offspringFinderVisitor=new OffspringFinderMethodRenamerVisitor(ancestorFinderVisitor.classIndex, originalName, newName);
-                    offspringFinderVisitor.visit(prog);
-                    MethodInstanceRenamer methodInstanceRenamer=new MethodInstanceRenamer(originalName,newName,symbolTableBuilder.myVariables,offspringFinderVisitor.OffspringNames);
-                    methodInstanceRenamer.visit(prog);
+	                    ResolveMethod resolveMethod=new ResolveMethod(linenumber,originalName);
+	                    prog.accept(resolveMethod);
+	                    AncestorFinderVisitor ancestorFinderVisitor=new AncestorFinderVisitor(resolveMethod.classIndex,originalName);
+	                    prog.accept(ancestorFinderVisitor);
+	                    OffspringFinderMethodRenamerVisitor offspringFinderVisitor=new OffspringFinderMethodRenamerVisitor(ancestorFinderVisitor.classIndex, originalName, newName);
+	                    prog.accept(offspringFinderVisitor);
+	                    MethodInstanceRenamer methodInstanceRenamer=new MethodInstanceRenamer(originalName,newName,symbolTableBuilder.myVariables,offspringFinderVisitor.OffspringNames);
+	                    prog.accept(methodInstanceRenamer);
                     }
-                    else {
-                    	// NEED TO GET PLACE FROM EYAL
-                    	VariableInstanceRenamer variableInstanceRenamer=new VariableInstanceRenamer(originalName,newName,/*?*/);
-                    	variableInstanceRenamer.visit(/*?*/);
-                    	FieldInstanceRenamerVisitor new fieldInstanceRenamerVisitor(/*?*/,originalName,newName);
+                    else { // it is a variable
+                    	ResolveVar resolveVar = new ResolveVar(linenumber, originalName, newName);
+                    	prog.accept(resolveVar);
+                    	if (resolveVar.methodIndex == -1) { // field
+                    		FieldInstanceRenamerVisitor fieldInstanceRenamerVisitor = new FieldInstanceRenamerVisitor(resolveVar.classIndex, originalName, newName);
+                    		prog.accept(fieldInstanceRenamerVisitor);
+                    	} else { // local / parameter
+	                    	VariableInstanceRenamer variableInstanceRenamer=new VariableInstanceRenamer(originalName,newName, 0, linenumber);
+	                    	MethodDecl method = prog.classDecls().get(resolveVar.classIndex).methoddecls().get(resolveVar.methodIndex);
+	                    	method.accept(variableInstanceRenamer);
+                    	}
                     }
                     
 
