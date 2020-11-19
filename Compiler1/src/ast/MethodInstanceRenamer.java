@@ -155,7 +155,7 @@ public class MethodInstanceRenamer implements Visitor {
 			if(e.ownerExpr() instanceof ThisExpr)
 				type = sTable.get(e.ownerExpr()).lookup("this").getType();
 			else if(e.ownerExpr() instanceof NewObjectExpr)
-				type = sTable.get(e.ownerExpr()).lookup(((NewObjectExpr) e.ownerExpr()).classId()).getType();
+				type = ((NewObjectExpr) e.ownerExpr()).classId();
 			else if(e.ownerExpr() instanceof IdentifierExpr)
 				type = sTable.get(e.ownerExpr()).lookup(((IdentifierExpr) e.ownerExpr()).id()).getType();	
 			if(OffspringNames.contains(type))
