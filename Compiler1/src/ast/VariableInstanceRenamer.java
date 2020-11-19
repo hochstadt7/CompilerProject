@@ -42,10 +42,11 @@ public class VariableInstanceRenamer implements Visitor {
             varDecl.accept(this);
         }
         //check if the var was overridden from outside or not of the scope
-        if(((external == 0) && line_found == line_number) || ((external == 1) && line_found == -1))
+        if(((external == 0) && line_found == line_number) || ((external == 1) && line_found == -1)) {
 	        for (Statement stmt : methodDecl.body()) {
 	            stmt.accept(this);
 	        }
+        }
         methodDecl.ret().accept(this);
 	}
 
