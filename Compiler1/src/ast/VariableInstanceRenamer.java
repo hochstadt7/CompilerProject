@@ -4,7 +4,7 @@ package ast;
 public class VariableInstanceRenamer implements Visitor {
 	private String origVarName, newVarName;//old and new names of the var
 	private int external; //is the var declared in or out of the method (1=external)
-	private int line_found = -1; //used to check the line the decl was found in
+	private int line_found; //used to check the line the decl was found in
 	
 	private int line_number; //linenumber which was passed as arg
 
@@ -33,6 +33,7 @@ public class VariableInstanceRenamer implements Visitor {
 
 	@Override
 	public void visit(MethodDecl methodDecl) {
+		line_found = -1;
 		//check if the var is declared as a formal or var
         for (FormalArg formal : methodDecl.formals()) {
             formal.accept(this);
@@ -101,7 +102,7 @@ public class VariableInstanceRenamer implements Visitor {
 	@Override
 	public void visit(AssignStatement assignStatement) {
 		assignStatement.rv().accept(this);
-		if(assignStatement.lv() == origVarName)
+		if(assignStatement.lv().equals(origVarName))
 			assignStatement.setLv(newVarName);
 
 	}
@@ -109,7 +110,7 @@ public class VariableInstanceRenamer implements Visitor {
 	@Override
 	public void visit(AssignArrayStatement assignArrayStatement) {
 		assignArrayStatement.rv().accept(this);
-		if(assignArrayStatement.lv() == origVarName)
+		if(assignArrayStatement.lv().equals(origVarName))
 			assignArrayStatement.setLv(newVarName);
 	}
 
@@ -191,7 +192,7 @@ public class VariableInstanceRenamer implements Visitor {
 
 	@Override
 	public void visit(IdentifierExpr e) {
-		if(e.id() == origVarName)
+		if(e.id().equals(origVarName))
 			e.setId(newVarName);
 
 	}

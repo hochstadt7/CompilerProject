@@ -57,14 +57,12 @@ public class ResolveVar implements Visitor {
 	public void visit(MethodDecl methodDecl) {
 		for (FormalArg formalArg : methodDecl.formals()) {
 			if (formalArg.lineNumber == lineNumber && formalArg.name().equals(name)) {
-				formalArg.setName(newName);
 				found = true;
 				return;
 			}
 		}
 		for (VarDecl varDecl : methodDecl.vardecls()) {
 			if (varDecl.lineNumber == lineNumber && varDecl.name().equals(name)) {
-				varDecl.setName(newName);
 				found = true;
 				return;
 			}

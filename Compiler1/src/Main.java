@@ -75,6 +75,7 @@ public class Main {
                     		FieldInstanceRenamerVisitor fieldInstanceRenamerVisitor = new FieldInstanceRenamerVisitor(resolveVar.classIndex, originalName, newName, linenumber);
                     		prog.accept(fieldInstanceRenamerVisitor);
                     	} else { // local / parameter
+                    		AstXMLSerializer xmlSerializer = new AstXMLSerializer();
 	                    	VariableInstanceRenamer variableInstanceRenamer=new VariableInstanceRenamer(originalName,newName, 0, linenumber);
 	                    	MethodDecl method = prog.classDecls().get(resolveVar.classIndex).methoddecls().get(resolveVar.methodIndex);
 	                    	method.accept(variableInstanceRenamer);
