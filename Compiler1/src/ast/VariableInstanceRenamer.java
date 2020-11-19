@@ -111,6 +111,7 @@ public class VariableInstanceRenamer implements Visitor {
 	@Override
 	public void visit(AssignArrayStatement assignArrayStatement) {
 		assignArrayStatement.rv().accept(this);
+		assignArrayStatement.index().accept(this);
 		if(assignArrayStatement.lv().equals(origVarName))
 			assignArrayStatement.setLv(newVarName);
 	}
