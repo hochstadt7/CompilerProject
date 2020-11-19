@@ -100,7 +100,7 @@ public class SymbolTableBuilder implements Visitor {
 		currMeth.setParentSymbolTable(this.ParentSymbolTableMeth);
 		
 		myVariables.put(mainClass,this.currentSymbolTableVar );
-		this.currentSymbolTableVar.addEntery(mainClass.argsName(), new Symbol("String-array"));
+		this.currentSymbolTableVar.addEntery(mainClass.argsName(), new SymbolDetails("String-array"));
 		
 		if(mainClass.mainStatement()!=null) {
 			mainClass.mainStatement().accept(this);
@@ -114,7 +114,7 @@ public class SymbolTableBuilder implements Visitor {
 		if(methodDecl.returnType()!=null) {
 		methodDecl.returnType().accept(this);
 		myMethods.put(methodDecl,this.currentSymbolTableMeth);
-		this.currentSymbolTableMeth.addEntery(methodDecl.name(), new Symbol(this.refType));
+		this.currentSymbolTableMeth.addEntery(methodDecl.name(), new SymbolDetails(this.refType));
 		}
 		
 		SymbolTable tempVar=this.currentSymbolTableVar;
@@ -156,7 +156,7 @@ public class SymbolTableBuilder implements Visitor {
 		if(formalArg.type()!=null) {
 		formalArg.type().accept(this);
 		myVariables.put(formalArg, this.currentSymbolTableVar);
-		this.currentSymbolTableVar.addEntery(formalArg.name(), new Symbol(this.refType));
+		this.currentSymbolTableVar.addEntery(formalArg.name(), new SymbolDetails(this.refType));
 		}
 	}
 
@@ -166,7 +166,7 @@ public class SymbolTableBuilder implements Visitor {
 		if(varDecl.type()!=null) {
 		varDecl.type().accept(this);
 		myVariables.put(varDecl, this.currentSymbolTableVar);
-		this.currentSymbolTableVar.addEntery(varDecl.name(), new Symbol(this.refType));
+		this.currentSymbolTableVar.addEntery(varDecl.name(), new SymbolDetails(this.refType));
 		}
 	}
 
@@ -334,7 +334,7 @@ public class SymbolTableBuilder implements Visitor {
 	@Override
 	public void visit(ThisExpr e) {
 		myVariables.put(e, currentSymbolTableVar);
-		this.currentSymbolTableVar.addEntery("this", new Symbol(this.classType));
+		this.currentSymbolTableVar.addEntery("this", new SymbolDetails(this.classType));
 	}
 
 	@Override

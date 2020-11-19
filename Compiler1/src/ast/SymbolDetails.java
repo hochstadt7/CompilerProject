@@ -1,10 +1,10 @@
 package ast;
 
-public class Symbol {
+public class SymbolDetails {
 	
 	private String type;
 	
-	public Symbol(String type) {
+	public SymbolDetails(String type) {
 	    this.type = type;
 	}
 	

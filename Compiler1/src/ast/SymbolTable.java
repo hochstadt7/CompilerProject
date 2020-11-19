@@ -7,19 +7,19 @@ import java.util.Map.Entry;
 
 public class SymbolTable {
 	
-	private Map<String,Symbol> entries;
+	private Map<String,SymbolDetails> entries;
 	private SymbolTable parent;
 	
 	public SymbolTable() {
-		this.entries=new HashMap<String,Symbol>();
+		this.entries=new HashMap<String,SymbolDetails>();
 		this.parent=null;
 	}
 	
-	public Map<String,Symbol> getEnteries() {
+	public Map<String,SymbolDetails> getEnteries() {
 		return this.entries;
 	}
 	
-	public void addEntery(String key,Symbol enterie) {
+	public void addEntery(String key,SymbolDetails enterie) {
 		this.entries.put(key, enterie);
 	}
 	
@@ -27,7 +27,7 @@ public class SymbolTable {
 		return this.entries.containsKey(key);
 	}
 	
-	public Symbol getEntry(String key) {
+	public SymbolDetails getEntry(String key) {
 		  return this.entries.get(key);
 	  }
 	
@@ -39,8 +39,8 @@ public class SymbolTable {
 		  this.parent = parentSymbolTable;
 	  }
 	
-	public Symbol lookup(String name) {
-		Symbol res = entries.get(name);
+	public SymbolDetails lookup(String name) {
+		SymbolDetails res = entries.get(name);
 		if (res != null) {
 			return res;
 		}
@@ -53,8 +53,8 @@ public class SymbolTable {
 public String toString() {
 		
 		System.out.println("Symbol table content:\n");
-		Set<Entry<String,Symbol>> symbolContent=this.entries.entrySet();
-		for (Map.Entry<String, Symbol> it: symbolContent) {
+		Set<Entry<String,SymbolDetails>> symbolContent=this.entries.entrySet();
+		for (Map.Entry<String, SymbolDetails> it: symbolContent) {
 			System.out.println("My name is: "+it.getKey()+" and my type:\n");
 			System.out.println(it.getValue());
 		}
