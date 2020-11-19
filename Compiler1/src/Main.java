@@ -1,7 +1,6 @@
 import ast.*;
 
 import java.io.*;
-import java.util.HashMap;
 
 public class Main {
     public static void main(String[] args) {
@@ -81,8 +80,8 @@ public class Main {
 	                    	method.accept(variableInstanceRenamer);
                     	}
                     }
-                    
-
+                    AstXMLSerializer xmlSerializer = new AstXMLSerializer();
+                    xmlSerializer.serialize(prog, outfilename);
                 } else {
                     throw new IllegalArgumentException("unknown command line action " + action);
                 }
