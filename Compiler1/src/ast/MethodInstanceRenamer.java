@@ -8,10 +8,10 @@ public class MethodInstanceRenamer implements Visitor {
 	public HashSet<String> OffspringNames;
 	private HashMap<AstNode,SymbolTable> sTable;
 	
-	public MethodInstanceRenamer(String _origMethodName, String _newMethodName, HashMap<AstNode,SymbolTable> _sTable, HashSet<String> OffspringNames) {
+	public MethodInstanceRenamer(String _origMethodName, String _newMethodName, HashMap<AstNode,SymbolTable> _sTable, HashSet<String> _OffspringNames) {
 		origMethodName = _origMethodName;
 		newMethodName = _newMethodName;
-		OffspringNames = new HashSet<String>();
+		OffspringNames = _OffspringNames;
 		sTable = _sTable;
 		
 	}
@@ -159,7 +159,7 @@ public class MethodInstanceRenamer implements Visitor {
 			else if(e.ownerExpr() instanceof IdentifierExpr)
 				type = sTable.get(e.ownerExpr()).lookup(((IdentifierExpr) e.ownerExpr()).id()).getType();	
 			if(OffspringNames.contains(type))
-				e.setMethodId(this.newMethodName);
+				e.setName(this.newMethodName);
 		}
 		for(Expr arg: e.actuals())//check args
 		{
