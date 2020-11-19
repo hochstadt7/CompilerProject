@@ -46,8 +46,8 @@ public class VariableInstanceRenamer implements Visitor {
 	        for (Statement stmt : methodDecl.body()) {
 	            stmt.accept(this);
 	        }
+		methodDecl.ret().accept(this);
         }
-        methodDecl.ret().accept(this);
 	}
 
 	@Override
