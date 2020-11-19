@@ -73,7 +73,7 @@ public class Main {
                     	ResolveVar resolveVar = new ResolveVar(linenumber, originalName, newName);
                     	prog.accept(resolveVar);
                     	if (resolveVar.methodIndex == -1) { // field
-                    		FieldInstanceRenamerVisitor fieldInstanceRenamerVisitor = new FieldInstanceRenamerVisitor(resolveVar.classIndex, originalName, newName);
+                    		FieldInstanceRenamerVisitor fieldInstanceRenamerVisitor = new FieldInstanceRenamerVisitor(resolveVar.classIndex, originalName, newName, linenumber);
                     		prog.accept(fieldInstanceRenamerVisitor);
                     	} else { // local / parameter
 	                    	VariableInstanceRenamer variableInstanceRenamer=new VariableInstanceRenamer(originalName,newName, 0, linenumber);
