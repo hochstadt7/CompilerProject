@@ -116,6 +116,7 @@ public class TranslatorVisitor implements Visitor {
 		String result = newReg();
 		emit(result + " = phi i1 [" + lastResult + ", %and" + andCounter + "], [0, %and" + (andCounter + 1) + "]");
 		lastResult = result;
+		andCounter += 3;
 	}
 
 	@Override
