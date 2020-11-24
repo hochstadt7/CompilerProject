@@ -3,13 +3,15 @@ package ast;
 public class TranslatorVisitor implements Visitor {
 	
 	public StringBuilder emitted;
-	private int ifCounter,whileCounter;
-	String lastRegist; // I am not sure how to represent what Roey suggested, but it is good idea
+	private int ifCounter,whileCounter, registerCounter, andCounter;
+	String lastResult; // I am not sure how to represent what Roee suggested, but it is good idea
 	
 	public TranslatorVisitor() {
 		emitted=new StringBuilder();
 		this.ifCounter=0; this.whileCounter=0;
-		this.lastRegist="";
+		this.registerCounter = 0;
+		this.andCounter = 0;
+		this.lastResult="";
 	}
 
 	@Override
@@ -59,7 +61,7 @@ public class TranslatorVisitor implements Visitor {
 		
 		int tempIf=this.ifCounter+=2;
 		ifStatement.cond().accept(this);
-		emit("br i1 "+lastRegist+" ,"+ "label %if"+tempIf+", label %if"+tempIf+1);
+		emit("br i1 "+lastResult+" ,"+ "label %if"+tempIf+", label %if"+tempIf+1);
 		emit("if"+tempIf+":");
 		ifStatement.thencase().accept(this);
 		emit("br label %if"+tempIf+2);
@@ -76,7 +78,7 @@ public class TranslatorVisitor implements Visitor {
 		int tempWhile=this.whileCounter+=2;
 		emit("br label %loop"+tempWhile);
 		whileStatement.cond().accept(this);
-		emit("br i1 "+lastRegist+" ,"+ "label %loop"+tempWhile+1+", label %loop"+tempWhile+2);
+		emit("br i1 "+lastResult+" ,"+ "label %loop"+tempWhile+1+", label %loop"+tempWhile+2);
 		emit("loop"+tempWhile+1+":");
 		whileStatement.body().accept(this);
 		emit("br label %loop"+tempWhile+2);
@@ -103,32 +105,57 @@ public class TranslatorVisitor implements Visitor {
 
 	@Override
 	public void visit(AndExpr e) {
-		// TODO Auto-generated method stub
-		
+		e.e1().accept(this);
+		emit("br i1 " + lastResult + ", label %and" + andCounter + ", label %and" + (andCounter + 1));
+		emit("and" + andCounter + ":");
+		e.e2().accept(this);
+		emit("br label %and" + (andCounter + 2));
+		emit("and" + (andCounter + 1) + ":");
+		emit("br label %and" + (andCounter + 2));
+		emit("and" + (andCounter + 2) + ":");
+		String result = newReg();
+		emit(result + " = phi i1 [" + lastResult + ", %and" + andCounter + "], [0, %and" + (andCounter + 1) + "]");
+		lastResult = result;
 	}
 
 	@Override
 	public void visit(LtExpr e) {
-		// TODO Auto-generated method stub
-		
+		e.e1().accept(this);
+		String firstArg = lastResult;
+		e.e2().accept(this);
+		String result = newReg();
+		emit(result + " = icmp slt i32 " + firstArg + ", " + lastResult);
+		lastResult = result;
 	}
 
 	@Override
 	public void visit(AddExpr e) {
-		// TODO Auto-generated method stub
-		
+		e.e1().accept(this);
+		String firstArg = lastResult;
+		e.e2().accept(this);
+		String result = newReg();
+		emit(result + " = add i32 " + firstArg + ", " + lastResult);
+		lastResult = result;
 	}
 
 	@Override
 	public void visit(SubtractExpr e) {
-		// TODO Auto-generated method stub
-		
+		e.e1().accept(this);
+		String firstArg = lastResult;
+		e.e2().accept(this);
+		String result = newReg();
+		emit(result + " = sub i32 " + firstArg + ", " + lastResult);
+		lastResult = result;
 	}
 
 	@Override
 	public void visit(MultExpr e) {
-		// TODO Auto-generated method stub
-		
+		e.e1().accept(this);
+		String firstArg = lastResult;
+		e.e2().accept(this);
+		String result = newReg();
+		emit(result + " = mul i32 " + firstArg + ", " + lastResult);
+		lastResult = result;
 	}
 
 	@Override
@@ -151,20 +178,17 @@ public class TranslatorVisitor implements Visitor {
 
 	@Override
 	public void visit(IntegerLiteralExpr e) {
-		// TODO Auto-generated method stub
-		
+		lastResult = Integer.toString(e.num());
 	}
 
 	@Override
 	public void visit(TrueExpr e) {
-		// TODO Auto-generated method stub
-		
+		lastResult = "1";
 	}
 
 	@Override
 	public void visit(FalseExpr e) {
-		// TODO Auto-generated method stub
-		
+		lastResult = "0";
 	}
 
 	@Override
@@ -193,8 +217,10 @@ public class TranslatorVisitor implements Visitor {
 
 	@Override
 	public void visit(NotExpr e) {
-		// TODO Auto-generated method stub
-		
+		e.e().accept(this);
+		String result = newReg();
+		emit(result + " = xor i1 1, " + lastResult);
+		lastResult = result;
 	}
 
 	@Override
@@ -223,6 +249,10 @@ public class TranslatorVisitor implements Visitor {
 	
 	public void emit(String s) {
 		emitted.append(s+"\n");
+	}
+	
+	public String newReg() {
+		return "%_" + registerCounter++;
 	}
 
 }
