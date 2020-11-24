@@ -58,31 +58,29 @@ public class TranslatorVisitor implements Visitor {
 
 	@Override
 	public void visit(IfStatement ifStatement) {
-		
-		int tempIf=this.ifCounter+=2;
 		ifStatement.cond().accept(this);
-		emit("br i1 "+lastResult+" ,"+ "label %if"+tempIf+", label %if"+tempIf+1);
-		emit("if"+tempIf+":");
+		emit("br i1 "+lastResult+" ,"+ "label %if"+ifCounter+", label %if"+ (ifCounter+1));
+		emit("if"+ifCounter+":");
 		ifStatement.thencase().accept(this);
-		emit("br label %if"+tempIf+2);
-		emit("if"+tempIf+1+":");
+		emit("br label %if"+ (ifCounter+2));
+		emit("if"+ (ifCounter+1) +":");
 		ifStatement.elsecase().accept(this);
-		emit("br label %if"+tempIf+2);
-		emit("if"+tempIf+2+":");
-		
+		emit("br label %if"+ (ifCounter+2));
+		emit("if"+ (ifCounter+2) +":");
+		ifCounter += 3;
 	}
 
 	@Override
 	public void visit(WhileStatement whileStatement) {
-
-		int tempWhile=this.whileCounter+=2;
-		emit("br label %loop"+tempWhile);
+		emit("br label %loop"+whileCounter);
+		emit("loop"+whileCounter+":");
 		whileStatement.cond().accept(this);
-		emit("br i1 "+lastResult+" ,"+ "label %loop"+tempWhile+1+", label %loop"+tempWhile+2);
-		emit("loop"+tempWhile+1+":");
+		emit("br i1 "+lastResult+" ,"+ "label %loop"+ (whileCounter+1) +", label %loop"+ (whileCounter+2));
+		emit("loop"+( whileCounter+1) +":");
 		whileStatement.body().accept(this);
-		emit("br label %loop"+tempWhile+2);
-		emit("loop"+tempWhile+2+":");
+		emit("br label %loop"+ (whileCounter+2));
+		emit("loop"+ (whileCounter+2) +":");
+		whileCounter += 3;
 	}
 
 	@Override
