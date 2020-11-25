@@ -58,29 +58,30 @@ public class TranslatorVisitor implements Visitor {
 
 	@Override
 	public void visit(IfStatement ifStatement) {
+		int tempIf=this.ifCounter;
+		this.ifCounter+=3;
 		ifStatement.cond().accept(this);
-		emit("br i1 "+lastResult+" ,"+ "label %if"+ifCounter+", label %if"+ (ifCounter+1));
-		emit("if"+ifCounter+":");
+		emit("br i1 "+lastResult+" ,"+ "label %if"+tempIf+", label %if"+tempIf+1);
+		emit("if"+tempIf+":");
 		ifStatement.thencase().accept(this);
-		emit("br label %if"+ (ifCounter+2));
-		emit("if"+ (ifCounter+1) +":");
+		emit("br label %if"+tempIf+2);
+		emit("if"+tempIf+1+":");
 		ifStatement.elsecase().accept(this);
-		emit("br label %if"+ (ifCounter+2));
-		emit("if"+ (ifCounter+2) +":");
-		ifCounter += 3;
+		emit("br label %if"+tempIf+2);
+		emit("if"+tempIf+2+":");
 	}
 
 	@Override
 	public void visit(WhileStatement whileStatement) {
-		emit("br label %loop"+whileCounter);
-		emit("loop"+whileCounter+":");
+		int tempWhile=this.whileCounter;
+		this.whileCounter+=3;
+		emit("br label %loop"+tempWhile);
 		whileStatement.cond().accept(this);
-		emit("br i1 "+lastResult+" ,"+ "label %loop"+ (whileCounter+1) +", label %loop"+ (whileCounter+2));
-		emit("loop"+( whileCounter+1) +":");
+		emit("br i1 "+lastResult+" ,"+ "label %loop"+tempWhile+1+", label %loop"+tempWhile+2);
+		emit("loop"+tempWhile+1+":");
 		whileStatement.body().accept(this);
-		emit("br label %loop"+ (whileCounter+2));
-		emit("loop"+ (whileCounter+2) +":");
-		whileCounter += 3;
+		emit("br label %loop"+tempWhile+2);
+		emit("loop"+tempWhile+2+":");
 	}
 
 	@Override
@@ -103,18 +104,19 @@ public class TranslatorVisitor implements Visitor {
 
 	@Override
 	public void visit(AndExpr e) {
+		int tempAnd=this.andCounter;
+		this.andCounter+=4;
 		e.e1().accept(this);
-		emit("br i1 " + lastResult + ", label %and" + andCounter + ", label %and" + (andCounter + 1));
-		emit("and" + andCounter + ":");
+		emit("br i1 " + lastResult + ", label %and" + tempAnd + ", label %and" + (tempAnd + 1));
+		emit("and" + tempAnd + ":");
 		e.e2().accept(this);
-		emit("br label %and" + (andCounter + 2));
-		emit("and" + (andCounter + 1) + ":");
-		emit("br label %and" + (andCounter + 2));
-		emit("and" + (andCounter + 2) + ":");
+		emit("br label %and" + (tempAnd + 2));
+		emit("and" + (tempAnd + 1) + ":");
+		emit("br label %and" + (tempAnd + 2));
+		emit("and" + (tempAnd + 2) + ":");
 		String result = newReg();
-		emit(result + " = phi i1 [" + lastResult + ", %and" + andCounter + "], [0, %and" + (andCounter + 1) + "]");
+		emit(result + " = phi i1 [" + lastResult + ", %and" + tempAnd + "], [0, %and" + (tempAnd + 1) + "]");
 		lastResult = result;
-		andCounter += 3;
 	}
 
 	@Override
