@@ -1,10 +1,14 @@
 package ast;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class TranslatorVisitor implements Visitor {
 	
 	public StringBuilder emitted;
 	private int ifCounter,whileCounter, registerCounter, andCounter;
 	String lastResult; // I am not sure how to represent what Roee suggested, but it is good idea
+	Map<ClassDecl, Vtable> ClassTable; /*classes and their Vtable*/
 	
 	public TranslatorVisitor() {
 		emitted=new StringBuilder();
@@ -12,17 +16,35 @@ public class TranslatorVisitor implements Visitor {
 		this.registerCounter = 0;
 		this.andCounter = 0;
 		this.lastResult="";
+		ClassTable=new HashMap<ClassDecl, Vtable>(); 
 	}
 
 	@Override
 	public void visit(Program program) {
-		// TODO Auto-generated method stub
+		
+		Map<String,ClassDecl> className=new HashMap<String,ClassDecl>();/*to use in BuildVtable*/
+		for (ClassDecl classDecl : program.classDecls())
+			className.put(classDecl.name(), classDecl);
+		
+		for (ClassDecl classDecl : program.classDecls()) {
+			
+			BuildVtable(classDecl,className);
+			String prefix="@."+classDecl.name()+"_vtable = global ["+ program.classDecls().size()+" x i8*] ";
+			StringBuilder sufix=new StringBuilder();
+			int index=0;
+			for (MethodDecl methodDecl:classDecl.methoddecls()) {
+				sufix.append("[i8* bitcast (i32 (i8*, i32)* @"+classDecl.name()+"."+classDecl.methoddecls().get(index).name()+" to i8*), ");
+				index++;
+			}
+			if (index>0)
+				sufix.setLength(sufix.length()-2);
+			emit(prefix+sufix.toString());
+	}
 		
 	}
 
 	@Override
 	public void visit(ClassDecl classDecl) {
-		// TODO Auto-generated method stub
 		
 	}
 
@@ -34,7 +56,7 @@ public class TranslatorVisitor implements Visitor {
 
 	@Override
 	public void visit(MethodDecl methodDecl) {
-		// TODO Auto-generated method stub
+		
 		
 	}
 
@@ -105,7 +127,7 @@ public class TranslatorVisitor implements Visitor {
 	@Override
 	public void visit(AndExpr e) {
 		int tempAnd=this.andCounter;
-		this.andCounter+=4;
+		this.andCounter+=3;
 		e.e1().accept(this);
 		emit("br i1 " + lastResult + ", label %and" + tempAnd + ", label %and" + (tempAnd + 1));
 		emit("and" + tempAnd + ":");
@@ -254,6 +276,27 @@ public class TranslatorVisitor implements Visitor {
 	
 	public String newReg() {
 		return "%_" + registerCounter++;
+	}
+	
+	/*build Vtable for classDecl*/
+	public void BuildVtable(ClassDecl classDecl,Map<String,ClassDecl> classname) {
+		
+		Vtable vtable=new Vtable();
+		if(classDecl.superName()!=null) {
+			for(MethodDecl methodDecl:ClassTable.get(classname.get(classDecl.superName())).getMethodOffset().keySet()) {
+				if(!classDecl.methoddecls().contains(methodDecl)) /* add methods from parent's Vtable that not appear in our class*/
+					vtable.addMethod(methodDecl);
+			}
+		}
+		
+		
+		for (VarDecl field : classDecl.fields()) {
+			vtable.addField(field);
+		}
+		for (MethodDecl methodDecl : classDecl.methoddecls()) {
+			vtable.addMethod(methodDecl);
+		}
+		ClassTable.put(classDecl, vtable);
 	}
 
 }
