@@ -32,7 +32,7 @@ public class TranslatorVisitor implements Visitor {
 			String prefix="@."+classDecl.name()+"_vtable = global ["+ program.classDecls().size()+" x i8*] ";
 			StringBuilder sufix=new StringBuilder();
 			int index=0;
-			for (MethodDecl methodDecl:classDecl.methoddecls()) {
+			for (MethodDecl methodDecl:ClassTable.get(classDecl).getMethodOffset().keySet()) {
 				sufix.append("[i8* bitcast (i32 (i8*, i32)* @"+classDecl.name()+"."+classDecl.methoddecls().get(index).name()+" to i8*), ");
 				index++;
 			}
@@ -40,6 +40,9 @@ public class TranslatorVisitor implements Visitor {
 				sufix.setLength(sufix.length()-2);
 			emit(prefix+sufix.toString());
 	}
+		for (ClassDecl classDecl : program.classDecls()) {
+			classDecl.accept(this);
+		}
 		
 	}
 
