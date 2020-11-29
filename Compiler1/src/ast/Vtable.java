@@ -5,25 +5,27 @@ import java.util.Map;
 
 public class Vtable {
 
-	Map<MethodDecl, Integer> methodOffset;
-	Map<VarDecl, Integer> fieldOffset;
+	private Map<MethodDecl, Integer> methodOffset;
+	private Map<VarDecl, Integer> fieldOffset;
+	private int VtableSize;
 	
 	public Vtable() {
 		methodOffset=new HashMap<MethodDecl,Integer>();
 		fieldOffset=new HashMap<VarDecl,Integer>();
+		VtableSize=0;
 	}
 	
 	/* the offset for the pointer of vtable is 0*/
-	int addMethod(MethodDecl methodDecl) {
-		if(!methodOffset.containsKey(methodDecl))
-			methodOffset.put(methodDecl, methodOffset.size());
-		return methodOffset.get(methodDecl);
+	void addMethod(MethodDecl methodDecl) {
+		methodOffset.put(methodDecl, methodOffset.size());
 	}
 	
-	int addField(VarDecl varDecl) {
-		if(!fieldOffset.containsKey(varDecl))
-			fieldOffset.put(varDecl, fieldOffset.size()*4+8);/* in the llvm, the offset is the value*4+8 (8 bytes for vtable pointer, 4 for a field)*/
-		return fieldOffset.get(varDecl);
+	void addField(VarDecl varDecl) {
+		
+		int offset=figureOffset(varDecl);
+		VtableSize+=offset;
+		fieldOffset.put(varDecl, VtableSize);
+		
 	}
 	
 	public Map<MethodDecl, Integer> getMethodOffset(){
@@ -32,5 +34,19 @@ public class Vtable {
 	
 	public Map<VarDecl, Integer> getFieldOffset(){
 		return this.fieldOffset;
+	}
+	
+	public int getVtableSize(){
+		return this.VtableSize;
+	}
+	
+	public int figureOffset(VarDecl varDecl) {
+		
+		if (varDecl.type() instanceof IntAstType)
+			return 4;
+		else if(varDecl.type() instanceof BoolAstType)
+			return 1;
+		else
+			return 8;
 	}
 }

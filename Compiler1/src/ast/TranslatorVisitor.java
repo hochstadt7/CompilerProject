@@ -9,6 +9,7 @@ public class TranslatorVisitor implements Visitor {
 	private int ifCounter,whileCounter, registerCounter, andCounter;
 	String lastResult; // I am not sure how to represent what Roee suggested, but it is good idea
 	Map<ClassDecl, Vtable> ClassTable; /*classes and their Vtable*/
+	Map<String,ClassDecl> className;
 	
 	public TranslatorVisitor() {
 		emitted=new StringBuilder();
@@ -17,27 +18,27 @@ public class TranslatorVisitor implements Visitor {
 		this.andCounter = 0;
 		this.lastResult="";
 		ClassTable=new HashMap<ClassDecl, Vtable>(); 
+		className=new HashMap<String,ClassDecl>();
 	}
 
 	@Override
 	public void visit(Program program) {
 		
-		Map<String,ClassDecl> className=new HashMap<String,ClassDecl>();/*to use in BuildVtable*/
 		for (ClassDecl classDecl : program.classDecls())
 			className.put(classDecl.name(), classDecl);
 		
 		for (ClassDecl classDecl : program.classDecls()) {
 			
-			BuildVtable(classDecl,className);
-			String prefix="@."+classDecl.name()+"_vtable = global ["+ program.classDecls().size()+" x i8*] ";
+			BuildVtable(classDecl);
+			Vtable myTable=ClassTable.get(classDecl);
+			String prefix="@."+classDecl.name()+"_vtable = global ["+ myTable.getMethodOffset().size()+" x i8*] ";
 			StringBuilder sufix=new StringBuilder();
-			int index=0;
-			for (MethodDecl methodDecl:ClassTable.get(classDecl).getMethodOffset().keySet()) {
-				sufix.append("[i8* bitcast (i32 (i8*, i32)* @"+classDecl.name()+"."+classDecl.methoddecls().get(index).name()+" to i8*), ");
-				index++;
+			for (MethodDecl methodDecl:myTable.getMethodOffset().keySet()) {
+				sufix.append("[i8* bitcast (i32 (i8*, i32)* @"+classDecl.name()+"."+methodDecl.name()+" to i8*), ");
 			}
-			if (index>0)
-				sufix.setLength(sufix.length()-2);
+			
+			sufix.setLength(sufix.length()-2);
+			sufix.append("]");
 			emit(prefix+sufix.toString());
 	}
 		for (ClassDecl classDecl : program.classDecls()) {
@@ -237,8 +238,13 @@ public class TranslatorVisitor implements Visitor {
 
 	@Override
 	public void visit(NewObjectExpr e) {
-		// TODO Auto-generated method stub
-		
+		Vtable tempVTable=ClassTable.get(className.get(e.classId()));/* e.classId returns the right class?*/
+		int numMethod=tempVTable.getMethodOffset().size();
+		emit(newReg()+" = call i8* @calloc(i32 1, i32 "+tempVTable.getVtableSize()+")");
+		emit(newReg()+" = bitcast i8* %_"+(registerCounter-1)+" to i8***");
+		emit(newReg()+" = getelementptr ["+numMethod+" x i8*], ["+numMethod+" x i8*]* @."+e.classId()+"_vtable, i32 0, i32 0");
+		emit("Store i8** %_"+(registerCounter-1)+", i8*** %_"+(registerCounter-2));
+		emit("Store i8* %_"+(registerCounter-3)+", i8** %"+lastResult);
 	}
 
 	@Override
@@ -281,23 +287,35 @@ public class TranslatorVisitor implements Visitor {
 		return "%_" + registerCounter++;
 	}
 	
+	public boolean hasMethodName(String name,ClassDecl classDecl) {
+		for(MethodDecl methodDecl:classDecl.methoddecls())
+		{
+			if(methodDecl.name().equals(name))
+				return true;
+		}
+		return false;
+	}
+	
 	/*build Vtable for classDecl*/
-	public void BuildVtable(ClassDecl classDecl,Map<String,ClassDecl> classname) {
+	public void BuildVtable(ClassDecl classDecl) {
 		
 		Vtable vtable=new Vtable();
 		if(classDecl.superName()!=null) {
-			for(MethodDecl methodDecl:ClassTable.get(classname.get(classDecl.superName())).getMethodOffset().keySet()) {
-				if(!classDecl.methoddecls().contains(methodDecl)) /* add methods from parent's Vtable that not appear in our class*/
+			Vtable parentTable=ClassTable.get(className.get(classDecl.superName()));
+			for(MethodDecl methodDecl:parentTable.getMethodOffset().keySet()) {
+				if(!hasMethodName(methodDecl.name(),classDecl)) /* add methods from parent's Vtable that not appear in our class. I am not sure this is enough check*/
 					vtable.addMethod(methodDecl);
+			}
+			for(VarDecl varDecl:parentTable.getFieldOffset().keySet()) {/*fields can't be "overriden"*/
+				vtable.addField(varDecl);
 			}
 		}
 		
-		
-		for (VarDecl field : classDecl.fields()) {
-			vtable.addField(field);
-		}
 		for (MethodDecl methodDecl : classDecl.methoddecls()) {
 			vtable.addMethod(methodDecl);
+		}
+		for (VarDecl field : classDecl.fields()) {
+			vtable.addField(field);
 		}
 		ClassTable.put(classDecl, vtable);
 	}
