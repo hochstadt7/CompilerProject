@@ -41,6 +41,7 @@ public class TranslatorVisitor implements Visitor {
 			sufix.append("]");
 			emit(prefix+sufix.toString());
 	}
+		print_helpers_methods();
 		for (ClassDecl classDecl : program.classDecls()) {
 			classDecl.accept(this);
 		}
@@ -112,7 +113,8 @@ public class TranslatorVisitor implements Visitor {
 
 	@Override
 	public void visit(SysoutStatement sysoutStatement) {
-		// TODO Auto-generated method stub
+		sysoutStatement.arg().accept(this);
+		emit("call void (i32) @print_int(i32 "+lastResult+")");
 		
 	}
 
@@ -318,6 +320,25 @@ public class TranslatorVisitor implements Visitor {
 			vtable.addField(field);
 		}
 		ClassTable.put(classDecl, vtable);
+	}
+	
+	public void print_helpers_methods() {
+		emit("declare i8* @calloc(i32, i32)");
+		emit("declare i32 @printf(i8*, ...)");
+		emit("declare void @exit(i32)");
+		emit("@_cint = constant [4 x i8] c\"%d\\0a\\00\"");
+		emit("@_cOOB = constant [15 x i8] c\"Out of bounds\\0a\\00\"");
+		emit("define void @print_int(i32 %i) {");
+		emit("%_str = bitcast [4 x i8]* @_cint to i8*");
+		emit("call i32 (i8*, ...) @printf(i8* %_str, i32 %i)");
+		emit("ret void");
+		emit("}");
+		emit("define void @throw_oob() {");
+		emit("%_str = bitcast [15 x i8]* @_cOOB to i8*");
+		emit("call i32 (i8*, ...) @printf(i8* %_str)");
+		emit("call void @exit(i32 1)");
+		emit("ret void");
+		emit("}");
 	}
 
 }
