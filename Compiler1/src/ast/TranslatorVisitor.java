@@ -124,11 +124,41 @@ public class TranslatorVisitor implements Visitor {
 		// TODO Auto-generated method stub
 		
 	}
+	
+	private void branchCallThrowOob(String ok) {
+		// There is no possibility of nesting here so no temp is needed.
+		emit("br i1 " + ok + ", label %arr" + (arrayCounter + 1) + ", label %arr" + arrayCounter);
+		emit("arr" + arrayCounter + ":");
+		emit("call void @throw_oob()");
+		//emit("br label %arr" + (arrayCounter + 1)); // Do we really need this?
+		emit("arr" + (arrayCounter + 1) + ":");
+		arrayCounter += 2;
+	}
+	
+	private String arrayAccess(String arr, String index) {
+		String length = newReg();
+		emit(length + " = load i32, i32* " + arr);
+		String nonnegative = newReg();
+		emit(nonnegative + " = icmp sle i32 0, " + index);
+		branchCallThrowOob(nonnegative);
+		String small = newReg();
+		emit(small + " = icmp sgt i32 " + length + ", " + index);
+		branchCallThrowOob(small);
+		String ahYesArraysActuallyStartAt1 = newReg();
+		emit(ahYesArraysActuallyStartAt1 + " = add i32 1, " + index);
+		String res = newReg();
+		emit(res + " = getelementptr i32, i32* " + arr + ", i32 " + ahYesArraysActuallyStartAt1);
+		return res;
+	}
 
 	@Override
 	public void visit(AssignArrayStatement assignArrayStatement) {
-		// TODO Auto-generated method stub
-		// Roee: I need to see hew we handle AssignStatement to write this.
+		// TODO lvalue lookup or something
+		String arr = lastResult; // should be lvalue??:)
+		assignArrayStatement.index().accept(this);
+		String place = arrayAccess(arr, lastResult);
+		assignArrayStatement.rv().accept(this);
+		emit(lastResult + " = load i32, i32* " + place);
 	}
 
 	@Override
@@ -193,29 +223,9 @@ public class TranslatorVisitor implements Visitor {
 		e.arrayExpr().accept(this);
 		String arr = lastResult;
 		e.indexExpr().accept(this);
-		String length = newReg();
-		emit(length + " = load i32, i32* " + arr);
-		String nonnegative = newReg();
-		emit(nonnegative + " = icmp sle i32 0, " + lastResult);
-		// There is no possibility of nesting here so no temp is needed.
-		emit("br i1 " + nonnegative + ", label %arr" + (arrayCounter + 1) + ", label %arr" + arrayCounter);
-		emit("arr" + arrayCounter + ":");
-		emit("call void @throw_oob()");
-		//emit("br label %arr" + (arrayCounter + 1)); // Do we really need this?
-		emit("arr" + (arrayCounter + 1) + ":");
-		arrayCounter += 2; // Cause I feel like it. Also, I will never need these labels again so why not?
-		String small = newReg();
-		emit(small + " = icmp sgt i32 " + length + ", " + lastResult);
-		emit("br i1 " + small + ", label %arr" + (arrayCounter + 1) + ", label %arr" + arrayCounter);
-		emit("arr" + arrayCounter + ":");
-		emit("call void @throw_oob()");
-		//emit("br label %arr" + (arrayCounter + 1)); // Do we really need this?
-		emit("arr" + (arrayCounter + 1) + ":");
-		String ahYesArraysActuallyStartAt1 = newReg();
-		emit(ahYesArraysActuallyStartAt1 + " = add i32 1, " + lastResult);
+		String place = arrayAccess(arr, lastResult);
 		lastResult = newReg();
-		emit(lastResult + " = getelementptr i32, i32* " + arr + ", i32 " + ahYesArraysActuallyStartAt1);
-		arrayCounter += 2;
+		emit(lastResult + " = load i32, i32* " + place);
 	}
 
 	@Override
