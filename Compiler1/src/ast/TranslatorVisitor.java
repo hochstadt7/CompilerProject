@@ -215,6 +215,7 @@ public class TranslatorVisitor implements Visitor {
 		emit(ahYesArraysActuallyStartAt1 + " = add i32 1, " + lastResult);
 		lastResult = newReg();
 		emit(lastResult + " = getelementptr i32, i32* " + arr + ", i32 " + ahYesArraysActuallyStartAt1);
+		arrayCounter += 2;
 	}
 
 	@Override
