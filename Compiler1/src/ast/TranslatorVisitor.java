@@ -158,7 +158,7 @@ public class TranslatorVisitor implements Visitor {
 		assignArrayStatement.index().accept(this);
 		String place = arrayAccess(arr, lastResult);
 		assignArrayStatement.rv().accept(this);
-		emit(lastResult + " = load i32, i32* " + place);
+		emit("store i32 " + lastResult + ", i32* " + place);
 	}
 
 	@Override
