@@ -6,7 +6,7 @@ import java.util.Map;
 public class TranslatorVisitor implements Visitor {
 	
 	public StringBuilder emitted;
-	private int ifCounter,whileCounter, registerCounter, andCounter;
+	private int ifCounter,whileCounter, registerCounter, andCounter, arrayCounter;
 	String lastResult; // I am not sure how to represent what Roee suggested, but it is good idea
 	Map<ClassDecl, Vtable> ClassTable; /*classes and their Vtable*/
 	Map<String,ClassDecl> className;
@@ -16,6 +16,7 @@ public class TranslatorVisitor implements Visitor {
 		this.ifCounter=0; this.whileCounter=0;
 		this.registerCounter = 0;
 		this.andCounter = 0;
+		arrayCounter = 0;
 		this.lastResult="";
 		ClassTable=new HashMap<ClassDecl, Vtable>(); 
 		className=new HashMap<String,ClassDecl>();
@@ -61,7 +62,7 @@ public class TranslatorVisitor implements Visitor {
 
 	@Override
 	public void visit(MethodDecl methodDecl) {
-		
+		// TODO Auto-generated method stub
 		
 	}
 
@@ -127,7 +128,7 @@ public class TranslatorVisitor implements Visitor {
 	@Override
 	public void visit(AssignArrayStatement assignArrayStatement) {
 		// TODO Auto-generated method stub
-		
+		// Roee: I need to see hew we handle AssignStatement to write this.
 	}
 
 	@Override
@@ -189,14 +190,39 @@ public class TranslatorVisitor implements Visitor {
 
 	@Override
 	public void visit(ArrayAccessExpr e) {
-		// TODO Auto-generated method stub
-		
+		e.arrayExpr().accept(this);
+		String arr = lastResult;
+		e.indexExpr().accept(this);
+		String length = newReg();
+		emit(length + " = load i32, i32* " + arr);
+		String nonnegative = newReg();
+		emit(nonnegative + " = icmp sle i32 0, " + lastResult);
+		// There is no possibility of nesting here so no temp is needed.
+		emit("br i1 " + nonnegative + ", label %arr" + (arrayCounter + 1) + ", label %arr" + arrayCounter);
+		emit("arr" + arrayCounter + ":");
+		emit("call void @throw_oob()");
+		//emit("br label %arr" + (arrayCounter + 1)); // Do we really need this?
+		emit("arr" + (arrayCounter + 1) + ":");
+		arrayCounter += 2; // Cause I feel like it. Also, I will never need these labels again so why not?
+		String small = newReg();
+		emit(small + " = icmp sgt i32 " + length + ", " + lastResult);
+		emit("br i1 " + small + ", label %arr" + (arrayCounter + 1) + ", label %arr" + arrayCounter);
+		emit("arr" + arrayCounter + ":");
+		emit("call void @throw_oob()");
+		//emit("br label %arr" + (arrayCounter + 1)); // Do we really need this?
+		emit("arr" + (arrayCounter + 1) + ":");
+		String ahYesArraysActuallyStartAt1 = newReg();
+		emit(ahYesArraysActuallyStartAt1 + " = add i32 1, " + lastResult);
+		lastResult = newReg();
+		emit(lastResult + " = getelementptr i32, i32* " + arr + ", i32 " + ahYesArraysActuallyStartAt1);
 	}
 
 	@Override
 	public void visit(ArrayLengthExpr e) {
-		// TODO Auto-generated method stub
-		
+		e.arrayExpr().accept(this);
+		String res = newReg();
+		emit(res + " = load i32, i32* " + lastResult);
+		lastResult = res;
 	}
 
 	@Override
@@ -234,8 +260,13 @@ public class TranslatorVisitor implements Visitor {
 
 	@Override
 	public void visit(NewIntArrayExpr e) {
-		// TODO Auto-generated method stub
-		
+		e.lengthExpr().accept(this);
+		String actualLen = newReg();
+		emit(actualLen + " = add i32 1, " + lastResult);
+		String ptr = newReg();
+		emit(ptr + " = call i8* @calloc(i32 " + actualLen + ", i32 4)");
+		lastResult = newReg();
+		emit(lastResult + " = bitcast i8* " + ptr + " to i32*");
 	}
 
 	@Override
