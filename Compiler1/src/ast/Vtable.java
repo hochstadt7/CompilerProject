@@ -12,7 +12,7 @@ public class Vtable {
 	public Vtable() {
 		methodOffset=new HashMap<MethodDecl,Integer>();
 		fieldOffset=new HashMap<VarDecl,Integer>();
-		VtableSize=0;
+		VtableSize=8; /* first 8 bytes for Vtable pointer */
 	}
 	
 	/* the offset for the pointer of vtable is 0*/
@@ -23,8 +23,8 @@ public class Vtable {
 	void addField(VarDecl varDecl) {
 		
 		int offset=figureOffset(varDecl);
-		VtableSize+=offset;
 		fieldOffset.put(varDecl, VtableSize);
+		VtableSize+=offset; /* after all additions, the VtableSize will be 'last value' more than the real size */
 		
 	}
 	
