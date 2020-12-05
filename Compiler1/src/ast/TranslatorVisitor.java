@@ -136,7 +136,20 @@ public class TranslatorVisitor implements Visitor {
 
 	@Override
 	public void visit(AssignStatement assignStatement) {
-		// TODO Auto-generated method stub
+		assignStatement.rv().accept(this);
+		String type = sTable.get(assignStatement).lookup(assignStatement.lv()).getType();
+		if(type == "int")
+		{
+			emit("store i32 " + lastResult + ", i32* %" + assignStatement.lv());
+		}
+		else if(type == "boolean")
+		{
+			emit("store i1 " + lastResult + ", i1* %" + assignStatement.lv());
+		}
+		else
+		{
+			emit("store i8* " + lastResult + ", i8** %" + assignStatement.lv());
+		}
 		
 	}
 	
@@ -253,7 +266,77 @@ public class TranslatorVisitor implements Visitor {
 
 	@Override
 	public void visit(MethodCallExpr e) {
-		// TODO Auto-generated method stub
+		int i = 0;
+		String type = ""; //used to store the type of the caller
+		Vtable tempVTable;
+		int offset = 0;
+		String caller = lastResult;
+		String return_val;
+		String func_reg;
+		ArrayList<String> arg_type_list = new ArrayList<String>(); //used to store the type of the args
+		String arg_types = "";
+		String actuals = "";
+		//get the class ID of the caller
+		if(e.ownerExpr() instanceof ThisExpr)
+			type = sTable.get(e.ownerExpr()).lookup("this").getType();
+		else if(e.ownerExpr() instanceof NewObjectExpr)
+			type = ((NewObjectExpr) e.ownerExpr()).classId();
+		else if(e.ownerExpr() instanceof IdentifierExpr)
+			type = sTable.get(e.ownerExpr()).lookup(((IdentifierExpr) e.ownerExpr()).id()).getType();
+		//get Vtable of class
+		tempVTable=ClassTable.get(className.get(type));
+		//using the Vtable to get the actual types
+		for(MethodDecl methodDecl:tempVTable.getMethodOffset().keySet())
+		{
+			
+			if(methodDecl.name().equals(e.methodId()))
+			{
+				offset = tempVTable.getMethodOffset().get(methodDecl);
+				for (VarDecl vardecls : methodDecl.vardecls())
+				{
+					vardecls.type().accept(this);
+					arg_type_list.add(lastResult);
+					arg_types += lastResult + ",";
+				}
+				methodDecl.returnType().accept(this);
+				arg_types = arg_types.substring(0, arg_types.length() - 1);
+			}
+		}
+		return_val = lastResult;
+		e.ownerExpr().accept(this);
+		String ptr = newReg();
+		emit(ptr + " = load i8*, i8** " + caller);
+		String last = ptr;
+		ptr = newReg();
+		emit(ptr + " = bitcast i8* " + last + " to i8***");
+		last = ptr;
+		ptr = newReg();
+		emit(ptr + " = load i8**, i8*** " + last);
+		last = ptr;
+		ptr = newReg();
+		emit(ptr + " = getelementptr i8*, i8** " + last + ", i32 " + offset);
+		last = ptr;
+		ptr = newReg();
+		emit(ptr + " = load i8*, i8** " + last);
+		last = ptr;
+		ptr = newReg();
+		func_reg = ptr;
+		emit(ptr + " = bitcast i8* " + last + " to " + return_val + " (" + arg_types + ")*");
+		last = ptr;
+		ptr = newReg();
+		actuals += "i8* " + caller;
+		//store actuals and build actual string
+		for(Expr arg : e.actuals())
+		{
+			actuals += ", " + arg_type_list.get(i) + " ";
+			arg.accept(this);
+			ptr = newReg();
+			emit(ptr + " = load "+arg_type_list.get(i)+", "+arg_type_list.get(i)+"* " + lastResult);
+			actuals += lastResult;
+		}
+		ptr = newReg();
+		emit(ptr + " = call "+return_val+" " + func_reg +"("+actuals+")");
+		lastResult = ptr;
 		
 	}
 
@@ -274,13 +357,13 @@ public class TranslatorVisitor implements Visitor {
 
 	@Override
 	public void visit(IdentifierExpr e) {
-		// TODO Auto-generated method stub
+		lastResult = "%" + e.id();
 		
 	}
 
 	@Override
 	public void visit(ThisExpr e) {
-		// TODO Auto-generated method stub
+		lastResult = "%this";
 		
 	}
 
@@ -303,7 +386,8 @@ public class TranslatorVisitor implements Visitor {
 		emit(newReg()+" = bitcast i8* %_"+(registerCounter-1)+" to i8***");
 		emit(newReg()+" = getelementptr ["+numMethod+" x i8*], ["+numMethod+" x i8*]* @."+e.classId()+"_vtable, i32 0, i32 0");
 		emit("Store i8** %_"+(registerCounter-1)+", i8*** %_"+(registerCounter-2));
-		emit("Store i8* %_"+(registerCounter-3)+", i8** %"+lastResult);
+		lastResult = "%" + (registerCounter-3);
+		//emit("Store i8* %_"+(registerCounter-3)+", i8** %"+lastResult);
 	}
 
 	@Override
@@ -316,25 +400,25 @@ public class TranslatorVisitor implements Visitor {
 
 	@Override
 	public void visit(IntAstType t) {
-		// TODO Auto-generated method stub
+		lastResult = "i32";
 		
 	}
 
 	@Override
 	public void visit(BoolAstType t) {
-		// TODO Auto-generated method stub
+		lastResult = "i1";
 		
 	}
 
 	@Override
 	public void visit(IntArrayAstType t) {
-		// TODO Auto-generated method stub
+		lastResult = "i32*";
 		
 	}
 
 	@Override
 	public void visit(RefType t) {
-		// TODO Auto-generated method stub
+		lastResult = "i8*";
 		
 	}
 	
