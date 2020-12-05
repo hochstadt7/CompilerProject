@@ -22,6 +22,14 @@ public class TranslatorVisitor implements Visitor {
 		className=new HashMap<String,ClassDecl>();
 	}
 
+	public String getFormalType(AstType astType) {
+		if (astType instanceof IntAstType)
+			return "i32";
+		else if(astType instanceof BoolAstType)
+			return "i1";
+		return "i8*";
+	}
+	
 	@Override
 	public void visit(Program program) {
 		
@@ -29,18 +37,25 @@ public class TranslatorVisitor implements Visitor {
 			className.put(classDecl.name(), classDecl);
 		
 		for (ClassDecl classDecl : program.classDecls()) {
-			
-			BuildVtable(classDecl);
-			Vtable myTable=ClassTable.get(classDecl);
+			Vtable myTable=BuildVtable(classDecl);
+			if(myTable.getMethodOffset().keySet().size()!=0) { /* Vtable has a least one method */
 			String prefix="@."+classDecl.name()+"_vtable = global ["+ myTable.getMethodOffset().size()+" x i8*] ";
 			StringBuilder sufix=new StringBuilder();
 			for (MethodDecl methodDecl:myTable.getMethodOffset().keySet()) {
-				sufix.append("[i8* bitcast (i32 (i8*, i32)* @"+classDecl.name()+"."+methodDecl.name()+" to i8*), ");
+				sufix.append("[i8* bitcast ("+getFormalType(methodDecl.returnType())+" (i8*, ");
+				StringBuilder formalArgs=new StringBuilder();
+				for (FormalArg formalArg: methodDecl.formals()) {
+					formalArgs.append(getFormalType(formalArg.type())+", ");
+				}
+				sufix.append(formalArgs.toString());
+				sufix.setLength(sufix.length()-2);
+				sufix.append(")* @"+classDecl.name()+"."+methodDecl.name()+" to i8*), ");
 			}
 			
 			sufix.setLength(sufix.length()-2);
 			sufix.append("]");
 			emit(prefix+sufix.toString());
+			}
 	}
 		print_helpers_methods();
 		for (ClassDecl classDecl : program.classDecls()) {
@@ -341,7 +356,7 @@ public class TranslatorVisitor implements Visitor {
 	}
 	
 	/*build Vtable for classDecl*/
-	public void BuildVtable(ClassDecl classDecl) {
+	public Vtable BuildVtable(ClassDecl classDecl) {
 		
 		Vtable vtable=new Vtable();
 		if(classDecl.superName()!=null) {
@@ -361,7 +376,9 @@ public class TranslatorVisitor implements Visitor {
 		for (VarDecl field : classDecl.fields()) {
 			vtable.addField(field);
 		}
+		
 		ClassTable.put(classDecl, vtable);
+		return vtable;
 	}
 	
 	public void print_helpers_methods() {
