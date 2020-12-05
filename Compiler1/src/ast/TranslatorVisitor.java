@@ -10,8 +10,9 @@ public class TranslatorVisitor implements Visitor {
 	String lastResult; // I am not sure how to represent what Roee suggested, but it is good idea
 	Map<ClassDecl, Vtable> ClassTable; /*classes and their Vtable*/
 	Map<String,ClassDecl> className;
+	private HashMap<AstNode,SymbolTable> sTable; //variable symbol table
 	
-	public TranslatorVisitor() {
+	public TranslatorVisitor(HashMap<AstNode,SymbolTable> _sTable) {
 		emitted=new StringBuilder();
 		this.ifCounter=0; this.whileCounter=0;
 		this.registerCounter = 0;
@@ -20,6 +21,7 @@ public class TranslatorVisitor implements Visitor {
 		this.lastResult="";
 		ClassTable=new HashMap<ClassDecl, Vtable>(); 
 		className=new HashMap<String,ClassDecl>();
+		sTable = _sTable;
 	}
 
 	public String getFormalType(AstType astType) {
