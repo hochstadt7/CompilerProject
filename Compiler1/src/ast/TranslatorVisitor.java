@@ -9,6 +9,7 @@ public class TranslatorVisitor implements Visitor {
 	public StringBuilder emitted;
 	private int ifCounter,whileCounter, registerCounter, andCounter, arrayCounter;
 	String lastResult; // I am not sure how to represent what Roee suggested, but it is good idea
+	String currentClass;
 	Map<ClassDecl, Vtable> ClassTable; /*classes and their Vtable*/
 	Map<String,ClassDecl> className;
 	private HashMap<AstNode,SymbolTable> sTable; //variable symbol table
@@ -20,19 +21,12 @@ public class TranslatorVisitor implements Visitor {
 		this.andCounter = 0;
 		arrayCounter = 0;
 		this.lastResult="";
+		this.currentClass = "";
 		ClassTable=new HashMap<ClassDecl, Vtable>(); 
 		className=new HashMap<String,ClassDecl>();
 		sTable = _sTable;
 	}
 
-	public String getFormalType(AstType astType) {
-		if (astType instanceof IntAstType)
-			return "i32";
-		else if(astType instanceof BoolAstType)
-			return "i1";
-		return "i8*";
-	}
-	
 	@Override
 	public void visit(Program program) {
 		
@@ -40,28 +34,22 @@ public class TranslatorVisitor implements Visitor {
 			className.put(classDecl.name(), classDecl);
 		
 		for (ClassDecl classDecl : program.classDecls()) {
-			Vtable myTable=BuildVtable(classDecl);
-			if(myTable.getMethodOffset().keySet().size()!=0) { /* Vtable has a least one method */
+			
+			BuildVtable(classDecl);
+			Vtable myTable=ClassTable.get(classDecl);
 			String prefix="@."+classDecl.name()+"_vtable = global ["+ myTable.getMethodOffset().size()+" x i8*] ";
 			StringBuilder sufix=new StringBuilder();
 			for (MethodDecl methodDecl:myTable.getMethodOffset().keySet()) {
-				sufix.append("[i8* bitcast ("+getFormalType(methodDecl.returnType())+" (i8*, ");
-				StringBuilder formalArgs=new StringBuilder();
-				for (FormalArg formalArg: methodDecl.formals()) {
-					formalArgs.append(getFormalType(formalArg.type())+", ");
-				}
-				sufix.append(formalArgs.toString());
-				sufix.setLength(sufix.length()-2);
-				sufix.append(")* @"+classDecl.name()+"."+methodDecl.name()+" to i8*), ");
+				sufix.append("[i8* bitcast (i32 (i8*, i32)* @"+classDecl.name()+"."+methodDecl.name()+" to i8*), ");
 			}
 			
 			sufix.setLength(sufix.length()-2);
 			sufix.append("]");
 			emit(prefix+sufix.toString());
-			}
 	}
 		print_helpers_methods();
 		for (ClassDecl classDecl : program.classDecls()) {
+			currentClass = classDecl.name();
 			classDecl.accept(this);
 		}
 		
@@ -69,19 +57,41 @@ public class TranslatorVisitor implements Visitor {
 
 	@Override
 	public void visit(ClassDecl classDecl) {
-		
+		for (MethodDecl methodDecl : classDecl.methoddecls()) {
+			methodDecl.accept(this);
+		}
 	}
 
 	@Override
 	public void visit(MainClass mainClass) {
-		// TODO Auto-generated method stub
-		
+		emit("define i32 @main() {");
+		mainClass.mainStatement().accept(this);
+		emit("}");
 	}
 
 	@Override
 	public void visit(MethodDecl methodDecl) {
-		// TODO Auto-generated method stub
-		
+		String ret_type = "";
+		String formals = "";
+		methodDecl.returnType().accept(this);
+		ret_type = lastResult;
+		for(FormalArg formalArg: methodDecl.formals())
+		{
+			formalArg.type().accept(this);
+			formals += ", " + lastResult + " %."+formalArg.name();
+			
+		}
+		emit("define "+ret_type+" @" + methodDecl.name() + "(i8* %this" + formals +") {");
+		for(FormalArg formalArg: methodDecl.formals())
+		{
+			formalArg.type().accept(this);
+			emit("%"+ formalArg.name() +" = alloca " + lastResult);
+		}
+		for(Statement statement: methodDecl.body())
+		{
+			statement.accept(this);
+		}
+		emit("}");
 	}
 
 	@Override
@@ -92,13 +102,22 @@ public class TranslatorVisitor implements Visitor {
 
 	@Override
 	public void visit(VarDecl varDecl) {
-		// TODO Auto-generated method stub
+		varDecl.type().accept(this);
+		boolean isField = sTable.get(varDecl).lookup(varDecl.name()).getIsField();
+		if(!isField)
+		{
+			emit("%"+ varDecl.name() +" = alloca " + lastResult);
+		}
 		
 	}
 
 	@Override
 	public void visit(BlockStatement blockStatement) {
-		// TODO Auto-generated method stub
+		
+		for(Statement statement: blockStatement.statements())
+		{
+			statement.accept(this);
+		}
 		
 	}
 
@@ -139,20 +158,40 @@ public class TranslatorVisitor implements Visitor {
 
 	@Override
 	public void visit(AssignStatement assignStatement) {
-		assignStatement.rv().accept(this);
 		String type = sTable.get(assignStatement).lookup(assignStatement.lv()).getType();
+		boolean isField = sTable.get(assignStatement).lookup(assignStatement.lv()).getIsField();
+		String reg, last;
+		Vtable tempVTable = ClassTable.get(className.get(currentClass));
+		int fieldLocation = 0;
+		assignStatement.rv().accept(this);
 		if(type == "int")
 		{
-			emit("store i32 " + lastResult + ", i32* %" + assignStatement.lv());
+			type = "i32";
 		}
 		else if(type == "boolean")
 		{
-			emit("store i1 " + lastResult + ", i1* %" + assignStatement.lv());
+			type = "i1";
 		}
 		else
 		{
-			emit("store i8* " + lastResult + ", i8** %" + assignStatement.lv());
+			type = "i8*";
 		}
+		if(isField)//if lv is a field, we have to store it differently 
+		{
+			for(VarDecl varDecl: tempVTable.getFieldOffset().keySet())
+			{
+				if(varDecl.name().equals(assignStatement.lv()))
+					fieldLocation = tempVTable.getFieldOffset().get(varDecl);
+			}
+			reg = newReg();
+			emit(reg +" = getelementptr i8, i8* %this, " +type + " " + fieldLocation);
+			last = reg;
+			reg = newReg();
+			emit(reg +" = bitcast i8* " +last + " to " + type +"*");
+			emit("store "+ type +" " + lastResult + ", "+ type +"* %" + reg);
+		}
+		else //lv not a field, store into var
+			emit("store "+ type +" " + lastResult + ", "+ type +"* %" + assignStatement.lv());
 		
 	}
 	
@@ -334,13 +373,13 @@ public class TranslatorVisitor implements Visitor {
 			actuals += ", " + arg_type_list.get(i) + " ";
 			arg.accept(this);
 			ptr = newReg();
-			emit(ptr + " = load "+arg_type_list.get(i)+", "+arg_type_list.get(i)+"* " + lastResult);
+			if(!(arg instanceof IntegerLiteralExpr))//no need to store int literal
+				emit(ptr + " = load "+arg_type_list.get(i)+", "+arg_type_list.get(i)+"* " + lastResult);
 			actuals += lastResult;
 		}
 		ptr = newReg();
 		emit(ptr + " = call "+return_val+" " + func_reg +"("+actuals+")");
 		lastResult = ptr;
-		
 	}
 
 	@Override
@@ -360,7 +399,47 @@ public class TranslatorVisitor implements Visitor {
 
 	@Override
 	public void visit(IdentifierExpr e) {
-		lastResult = "%" + e.id();
+		Vtable tempVTable = ClassTable.get(className.get(currentClass));
+		String type = sTable.get(e).lookup(e.id()).getType();
+		boolean isField = sTable.get(e).lookup(e.id()).getIsField();
+		String reg, last;
+		int fieldLocation = 0;
+		if(type == "int")//need to also check for array
+		{
+			type = "i32";
+		}
+		else if(type == "boolean")
+		{
+			type = "i1";
+		}
+		else
+		{
+			type = "i8*";
+		}
+		if(isField)
+		{
+			
+			for(VarDecl varDecl: tempVTable.getFieldOffset().keySet())
+			{
+				if(varDecl.name().equals(e.id()))
+					fieldLocation = tempVTable.getFieldOffset().get(varDecl);
+			}
+			reg = newReg();
+			emit(reg +" = getelementptr i8, i8* %this, " +type + " " + fieldLocation);
+			last = reg;
+			reg = newReg();
+			emit(reg +" = bitcast i8* " +last + " to " + type +"*");
+			last = reg;
+			reg = newReg();
+			emit(reg +" = load " +type + ", " + type +"* " + last);
+			lastResult = reg;
+		}
+		else
+		{
+			reg = newReg();
+			emit(reg +" = load " +type + ", " + type +"* %" + e.id());
+			lastResult = "%" + e.id();
+		}
 		
 	}
 
@@ -443,7 +522,7 @@ public class TranslatorVisitor implements Visitor {
 	}
 	
 	/*build Vtable for classDecl*/
-	public Vtable BuildVtable(ClassDecl classDecl) {
+	public void BuildVtable(ClassDecl classDecl) {
 		
 		Vtable vtable=new Vtable();
 		if(classDecl.superName()!=null) {
@@ -463,9 +542,7 @@ public class TranslatorVisitor implements Visitor {
 		for (VarDecl field : classDecl.fields()) {
 			vtable.addField(field);
 		}
-		
 		ClassTable.put(classDecl, vtable);
-		return vtable;
 	}
 	
 	public void print_helpers_methods() {
