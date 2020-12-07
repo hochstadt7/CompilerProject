@@ -27,13 +27,6 @@ public class TranslatorVisitor implements Visitor {
 		sTable = _sTable;
 	}
 
-	public String getFormalType(AstType astType) {
-		if (astType instanceof IntAstType)
-			return "i32";
-		else if(astType instanceof BoolAstType)
-			return "i1";
-		return "i8*";
-	}
 	
 	@Override
 	public void visit(Program program) {
@@ -43,14 +36,18 @@ public class TranslatorVisitor implements Visitor {
 		
 		for (ClassDecl classDecl : program.classDecls()) {
 			Vtable myTable=BuildVtable(classDecl);
-			if(myTable.getMethodOffset().keySet().size()==0) { /* at least one method in Vtable */
+			if(myTable.getMethodOffset().keySet().size()!=0) { /* at least one method in Vtable */
 			String prefix="@."+classDecl.name()+"_vtable = global ["+ myTable.getMethodOffset().size()+" x i8*] ";
 			StringBuilder sufix=new StringBuilder();
 			for (MethodDecl methodDecl:myTable.getMethodOffset().keySet()) {
-				sufix.append("[i8* bitcast ("+getFormalType(methodDecl.returnType())+" (i8*, ");
+				sufix.append("[i8* bitcast (");
+				methodDecl.returnType().accept(this);
+				sufix.append(lastResult);
+				sufix.append(" (i8*, ");
 				StringBuilder formalArgs=new StringBuilder();
 				for (FormalArg formalArg: methodDecl.formals()) {
-					formalArgs.append(getFormalType(formalArg.type())+", ");
+					formalArg.type().accept(this);
+					formalArgs.append(lastResult+", ");
 				}
 				sufix.append(formalArgs.toString());
 				sufix.setLength(sufix.length()-2);
@@ -141,7 +138,7 @@ public class TranslatorVisitor implements Visitor {
 		int tempIf=this.ifCounter;
 		this.ifCounter+=3;
 		ifStatement.cond().accept(this);
-		emit("br i1 "+lastResult+" ,"+ "label %if"+tempIf+", label %if"+tempIf+1);
+		emit("br i1 "+lastResult+", "+ "label %if"+tempIf+", label %if"+tempIf+1);
 		emit("if"+tempIf+":");
 		ifStatement.thencase().accept(this);
 		emit("br label %if"+tempIf+2);
@@ -157,7 +154,7 @@ public class TranslatorVisitor implements Visitor {
 		this.whileCounter+=3;
 		emit("br label %loop"+tempWhile);
 		whileStatement.cond().accept(this);
-		emit("br i1 "+lastResult+" ,"+ "label %loop"+tempWhile+1+", label %loop"+tempWhile+2);
+		emit("br i1 "+lastResult+", "+ "label %loop"+tempWhile+1+", label %loop"+tempWhile+2);
 		emit("loop"+tempWhile+1+":");
 		whileStatement.body().accept(this);
 		emit("br label %loop"+tempWhile+2);
