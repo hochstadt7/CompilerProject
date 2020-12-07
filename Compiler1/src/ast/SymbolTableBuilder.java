@@ -1,7 +1,5 @@
 package ast;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -9,13 +7,10 @@ import java.util.Set;
 
 public class SymbolTableBuilder implements Visitor {
 
-	public HashMap<AstNode,SymbolTable> myMethods;
 	public HashMap<AstNode,SymbolTable> myVariables;
 	
 	private SymbolTable currentSymbolTableVar; 
 	private SymbolTable ParentSymbolTableVar;
-	private SymbolTable currentSymbolTableMeth; 
-	private SymbolTable ParentSymbolTableMeth;
 	
 	private String refType=""; /* type of the variable */
 	private String classType=""; /* current class */
@@ -24,21 +19,17 @@ public class SymbolTableBuilder implements Visitor {
 	public SymbolTableBuilder() {
 		this.currentSymbolTableVar = null;
 		this.ParentSymbolTableVar = null;
-		this.currentSymbolTableMeth = null;
-		this.ParentSymbolTableMeth = null;
-		
-		this.myMethods=new HashMap<AstNode,SymbolTable>();
+
 		this.myVariables=new HashMap<AstNode,SymbolTable>();
 	}
 	
 	/* build the classes's symbol table hierarchy according to the inheritance */
-	public void setSymbolTableClassHirerachy(Program program,HashMap<AstNode, ArrayList<SymbolTable>> classAst,HashMap<String, ArrayList<SymbolTable>> classNames) {
+	public void setSymbolTableClassHirerachy(Program program,HashMap<AstNode,SymbolTable> classAst,HashMap<String,SymbolTable> classNames) {
 		
 		for (ClassDecl classDecl:program.classDecls()) {
 			String parentName=classDecl.superName();
 			if(parentName!=null) {	
-				classAst.get(classDecl).get(0).setParentSymbolTable(classNames.get(parentName).get(0));
-				classAst.get(classDecl).get(1).setParentSymbolTable(classNames.get(parentName).get(1));
+				classAst.get(classDecl).setParentSymbolTable(classNames.get(parentName));
 			}
 		}
 		
@@ -50,8 +41,8 @@ public class SymbolTableBuilder implements Visitor {
 	@Override
 	public void visit(Program program) {
 		
-		HashMap<AstNode,ArrayList<SymbolTable>> classAst=new HashMap<AstNode,ArrayList<SymbolTable>>();
-		HashMap<String,ArrayList<SymbolTable>> classNames=new HashMap<String,ArrayList<SymbolTable>>();
+		HashMap<AstNode,SymbolTable> classAst=new HashMap<AstNode,SymbolTable>();
+		HashMap<String,SymbolTable> classNames=new HashMap<String,SymbolTable>();
 		
 		if(program.mainClass()!=null) {
 			program.mainClass().accept(this);
@@ -60,15 +51,12 @@ public class SymbolTableBuilder implements Visitor {
 		for (ClassDecl cls : program.classDecls()) {	
 			
 			SymbolTable currVar=new SymbolTable();
-			SymbolTable currMeth=new SymbolTable();
 		
 			this.currentSymbolTableVar=currVar;
 			currVar.setParentSymbolTable(this.ParentSymbolTableVar);
-			this.currentSymbolTableMeth=currMeth;
-			currMeth.setParentSymbolTable(this.ParentSymbolTableMeth);
 			
-			classAst.put(cls,new ArrayList<SymbolTable>(Arrays.asList(this.currentSymbolTableVar,this.currentSymbolTableMeth))); /*prepare hashmaps for setSymbolTableClassHirerachy() call*/
-			classNames.put(cls.name(),new ArrayList<SymbolTable>(Arrays.asList(this.currentSymbolTableVar,this.currentSymbolTableMeth)));
+			classAst.put(cls,this.currentSymbolTableVar); /*prepare hashmaps for setSymbolTableClassHirerachy() call*/
+			classNames.put(cls.name(),this.currentSymbolTableVar);
 			
 			cls.accept(this);
 		}
@@ -94,12 +82,10 @@ public class SymbolTableBuilder implements Visitor {
 	public void visit(MainClass mainClass) {
 		this.classType=mainClass.name();
 		SymbolTable currVar=new SymbolTable();
-		SymbolTable currMeth=new SymbolTable();
 		
 		this.currentSymbolTableVar=currVar;
 		currVar.setParentSymbolTable(this.ParentSymbolTableVar);
-		this.currentSymbolTableMeth=currMeth;
-		currMeth.setParentSymbolTable(this.ParentSymbolTableMeth);
+
 		
 		myVariables.put(mainClass,this.currentSymbolTableVar );
 		this.currentSymbolTableVar.addEntery(mainClass.argsName(), new SymbolDetails("String-array"));
@@ -115,21 +101,14 @@ public class SymbolTableBuilder implements Visitor {
 		
 		if(methodDecl.returnType()!=null) {
 		methodDecl.returnType().accept(this);
-		myMethods.put(methodDecl,this.currentSymbolTableMeth);
-		this.currentSymbolTableMeth.addEntery(methodDecl.name(), new SymbolDetails(this.refType));
 		}
 		
 		SymbolTable tempVar=this.currentSymbolTableVar;
-		SymbolTable tempMeth=this.currentSymbolTableMeth;
 		SymbolTable currVar=new SymbolTable();
-		SymbolTable currMeth=new SymbolTable();
 		
 		this.ParentSymbolTableVar=this.currentSymbolTableVar;
 		this.currentSymbolTableVar=currVar;
 		currVar.setParentSymbolTable(this.ParentSymbolTableVar);
-		this.ParentSymbolTableMeth=this.currentSymbolTableMeth;
-		this.currentSymbolTableMeth=currMeth;
-		currMeth.setParentSymbolTable(this.ParentSymbolTableMeth);
 		
 		for (VarDecl vDecl: methodDecl.vardecls()) {
 			vDecl.accept(this);
@@ -147,8 +126,6 @@ public class SymbolTableBuilder implements Visitor {
 		/* retrieve pointers for upper scope */
 		this.currentSymbolTableVar=tempVar;
 		this.ParentSymbolTableVar=tempVar.getParentSymbolTable();
-		this.currentSymbolTableMeth=tempMeth;
-		this.ParentSymbolTableMeth=tempMeth.getParentSymbolTable();
 		
 	}
 
@@ -300,7 +277,6 @@ public class SymbolTableBuilder implements Visitor {
 
 	if(e.ownerExpr()!=null)
 		e.ownerExpr().accept(this);
-	myMethods.put(e, this.currentSymbolTableMeth);
 	
 	for(Expr expr: e.actuals()) {
 		expr.accept(this);
@@ -385,17 +361,10 @@ public class SymbolTableBuilder implements Visitor {
 		
 		System.out.println("All the symbol tables:\n");
 		Set<Entry<AstNode, SymbolTable>> varsSet=this.myVariables.entrySet();
-		Set<Entry<AstNode, SymbolTable>> methodsSet=this.myMethods.entrySet();
 		
 		System.out.println("printing variables symbol tables:");
 		for (Map.Entry<AstNode, SymbolTable> it: varsSet) {
 			System.out.println("My name is: "+it.getKey()+" at line "+it.getKey().lineNumber+" and my symbol table is:\n");
-			System.out.println(it.getValue());
-		}
-		
-		System.out.println("printing methods symbol tables:\n");
-		for (Map.Entry<AstNode, SymbolTable> it: methodsSet) {
-			System.out.print("My name is: "+it.getKey()+" at line "+it.getKey().lineNumber+"and my symbol table is: \n");
 			System.out.println(it.getValue());
 		}
 		

@@ -8,11 +8,11 @@ public class TranslatorVisitor implements Visitor {
 	
 	public StringBuilder emitted;
 	private int ifCounter,whileCounter, registerCounter, andCounter, arrayCounter;
-	String lastResult; // I am not sure how to represent what Roee suggested, but it is good idea
+	String lastResult;
 	String currentClass;
 	Map<ClassDecl, Vtable> ClassTable; /*classes and their Vtable*/
 	Map<String,ClassDecl> className;
-	private HashMap<AstNode,SymbolTable> sTable; //variable symbol table
+	private HashMap<AstNode,SymbolTable> sTable; /* variable symbol table */
 	
 	public TranslatorVisitor(HashMap<AstNode,SymbolTable> _sTable) {
 		emitted=new StringBuilder();
@@ -27,6 +27,14 @@ public class TranslatorVisitor implements Visitor {
 		sTable = _sTable;
 	}
 
+	public String getFormalType(AstType astType) {
+		if (astType instanceof IntAstType)
+			return "i32";
+		else if(astType instanceof BoolAstType)
+			return "i1";
+		return "i8*";
+	}
+	
 	@Override
 	public void visit(Program program) {
 		
@@ -34,22 +42,28 @@ public class TranslatorVisitor implements Visitor {
 			className.put(classDecl.name(), classDecl);
 		
 		for (ClassDecl classDecl : program.classDecls()) {
-			
-			BuildVtable(classDecl);
-			Vtable myTable=ClassTable.get(classDecl);
+			Vtable myTable=BuildVtable(classDecl);
+			if(myTable.getMethodOffset().keySet().size()==0) { /* at least one method in Vtable */
 			String prefix="@."+classDecl.name()+"_vtable = global ["+ myTable.getMethodOffset().size()+" x i8*] ";
 			StringBuilder sufix=new StringBuilder();
 			for (MethodDecl methodDecl:myTable.getMethodOffset().keySet()) {
-				sufix.append("[i8* bitcast (i32 (i8*, i32)* @"+classDecl.name()+"."+methodDecl.name()+" to i8*), ");
+				sufix.append("[i8* bitcast ("+getFormalType(methodDecl.returnType())+" (i8*, ");
+				StringBuilder formalArgs=new StringBuilder();
+				for (FormalArg formalArg: methodDecl.formals()) {
+					formalArgs.append(getFormalType(formalArg.type())+", ");
+				}
+				sufix.append(formalArgs.toString());
+				sufix.setLength(sufix.length()-2);
+				sufix.append(")* @"+classDecl.name()+"."+methodDecl.name()+" to i8*), ");
 			}
 			
 			sufix.setLength(sufix.length()-2);
 			sufix.append("]");
 			emit(prefix+sufix.toString());
 	}
+		}
 		print_helpers_methods();
 		for (ClassDecl classDecl : program.classDecls()) {
-			currentClass = classDecl.name();
 			classDecl.accept(this);
 		}
 		
@@ -462,14 +476,13 @@ public class TranslatorVisitor implements Visitor {
 
 	@Override
 	public void visit(NewObjectExpr e) {
-		Vtable tempVTable=ClassTable.get(className.get(e.classId()));/* e.classId returns the right class?*/
+		Vtable tempVTable=ClassTable.get(className.get(e.classId()));
 		int numMethod=tempVTable.getMethodOffset().size();
 		emit(newReg()+" = call i8* @calloc(i32 1, i32 "+tempVTable.getVtableSize()+")");
-		emit(newReg()+" = bitcast i8* %_"+(registerCounter-1)+" to i8***");
+		emit(newReg()+" = bitcast i8* %_"+(registerCounter-2)+" to i8***");
 		emit(newReg()+" = getelementptr ["+numMethod+" x i8*], ["+numMethod+" x i8*]* @."+e.classId()+"_vtable, i32 0, i32 0");
 		emit("Store i8** %_"+(registerCounter-1)+", i8*** %_"+(registerCounter-2));
-		lastResult = "%" + (registerCounter-3);
-		//emit("Store i8* %_"+(registerCounter-3)+", i8** %"+lastResult);
+		emit("Store i8* %_"+(registerCounter-3)+", i8** %"+lastResult);/* expect here to have the variable that we created to him the new object */
 	}
 
 	@Override
@@ -522,13 +535,13 @@ public class TranslatorVisitor implements Visitor {
 	}
 	
 	/*build Vtable for classDecl*/
-	public void BuildVtable(ClassDecl classDecl) {
+	public Vtable BuildVtable(ClassDecl classDecl) {
 		
 		Vtable vtable=new Vtable();
 		if(classDecl.superName()!=null) {
 			Vtable parentTable=ClassTable.get(className.get(classDecl.superName()));
 			for(MethodDecl methodDecl:parentTable.getMethodOffset().keySet()) {
-				if(!hasMethodName(methodDecl.name(),classDecl)) /* add methods from parent's Vtable that not appear in our class. I am not sure this is enough check*/
+				if(!hasMethodName(methodDecl.name(),classDecl))
 					vtable.addMethod(methodDecl);
 			}
 			for(VarDecl varDecl:parentTable.getFieldOffset().keySet()) {/*fields can't be "overriden"*/
@@ -543,6 +556,7 @@ public class TranslatorVisitor implements Visitor {
 			vtable.addField(field);
 		}
 		ClassTable.put(classDecl, vtable);
+		return vtable;
 	}
 	
 	public void print_helpers_methods() {
