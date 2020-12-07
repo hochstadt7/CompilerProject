@@ -63,6 +63,7 @@ public class TranslatorVisitor implements Visitor {
 	}
 		}
 		print_helpers_methods();
+		program.mainClass().accept(this);
 		for (ClassDecl classDecl : program.classDecls()) {
 			classDecl.accept(this);
 		}
@@ -178,15 +179,17 @@ public class TranslatorVisitor implements Visitor {
 		Vtable tempVTable = ClassTable.get(className.get(currentClass));
 		int fieldLocation = 0;
 		assignStatement.rv().accept(this);
-		if(type == "int")
+		if(type.equals("int"))
 		{
 			type = "i32";
 		}
-		else if(type == "boolean")
+		else if(type.equals("boolean"))
 		{
 			type = "i1";
 		}
-		else
+		else if (type.equals("int-array")) {
+			type = "i32*";
+		} else
 		{
 			type = "i8*";
 		}
@@ -234,11 +237,38 @@ public class TranslatorVisitor implements Visitor {
 		emit(res + " = getelementptr i32, i32* " + arr + ", i32 " + ahYesArraysActuallyStartAt1);
 		return res;
 	}
+	
+	private String getVariable(String type, String name, SymbolTable table) {
+		Vtable tempVTable = ClassTable.get(className.get(currentClass));
+		boolean isField = table.lookup(name).getIsField();
+		String reg, last;
+		int fieldLocation = 0;
+		if(isField)
+		{
+			for(VarDecl varDecl: tempVTable.getFieldOffset().keySet())
+			{
+				if(varDecl.name().equals(name))
+					fieldLocation = tempVTable.getFieldOffset().get(varDecl);
+			}
+			reg = newReg();
+			emit(reg +" = getelementptr i8, i8* %this, " + type + " " + fieldLocation);
+			last = reg;
+			reg = newReg();
+			emit(reg +" = bitcast i8* " + last + " to " + type + "*");
+			last = reg;
+		}
+		else
+		{
+			last = name;
+		}
+		reg = newReg();
+		emit(reg +" = load " +type + ", " + type + "* " + last);
+		return reg;
+	}
 
 	@Override
 	public void visit(AssignArrayStatement assignArrayStatement) {
-		// TODO lvalue lookup or something
-		String arr = lastResult; // should be lvalue??:)
+		String arr = getVariable("i32*", assignArrayStatement.lv(), sTable.get(assignArrayStatement));
 		assignArrayStatement.index().accept(this);
 		String place = arrayAccess(arr, lastResult);
 		assignArrayStatement.rv().accept(this);
@@ -413,48 +443,22 @@ public class TranslatorVisitor implements Visitor {
 
 	@Override
 	public void visit(IdentifierExpr e) {
-		Vtable tempVTable = ClassTable.get(className.get(currentClass));
 		String type = sTable.get(e).lookup(e.id()).getType();
-		boolean isField = sTable.get(e).lookup(e.id()).getIsField();
-		String reg, last;
-		int fieldLocation = 0;
-		if(type == "int")//need to also check for array
+		if(type.equals("int"))
 		{
 			type = "i32";
 		}
-		else if(type == "boolean")
+		else if(type.equals("boolean"))
 		{
 			type = "i1";
 		}
-		else
+		else if (type.equals("int-array")) {
+			type = "i32*";
+		} else
 		{
 			type = "i8*";
 		}
-		if(isField)
-		{
-			
-			for(VarDecl varDecl: tempVTable.getFieldOffset().keySet())
-			{
-				if(varDecl.name().equals(e.id()))
-					fieldLocation = tempVTable.getFieldOffset().get(varDecl);
-			}
-			reg = newReg();
-			emit(reg +" = getelementptr i8, i8* %this, " +type + " " + fieldLocation);
-			last = reg;
-			reg = newReg();
-			emit(reg +" = bitcast i8* " +last + " to " + type +"*");
-			last = reg;
-			reg = newReg();
-			emit(reg +" = load " +type + ", " + type +"* " + last);
-			lastResult = reg;
-		}
-		else
-		{
-			reg = newReg();
-			emit(reg +" = load " +type + ", " + type +"* %" + e.id());
-			lastResult = "%" + e.id();
-		}
-		
+		lastResult = getVariable(type, e.id(), sTable.get(e));
 	}
 
 	@Override
