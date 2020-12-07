@@ -170,75 +170,21 @@ public class TranslatorVisitor implements Visitor {
 		emit("call void (i32) @print_int(i32 "+lastResult+")");
 		
 	}
-
-	@Override
-	public void visit(AssignStatement assignStatement) {
-		String type = sTable.get(assignStatement).lookup(assignStatement.lv()).getType();
-		boolean isField = sTable.get(assignStatement).lookup(assignStatement.lv()).getIsField();
-		String reg, last;
-		Vtable tempVTable = ClassTable.get(className.get(currentClass));
-		int fieldLocation = 0;
-		assignStatement.rv().accept(this);
-		if(type.equals("int"))
-		{
-			type = "i32";
+	
+	private String translateType(String type) {
+		switch (type) {
+		case "int":
+			return "i32";
+		case "boolean":
+			return "i1";
+		case "int-array":
+			return "i32*";
+		default:
+			return "i8*";
 		}
-		else if(type.equals("boolean"))
-		{
-			type = "i1";
-		}
-		else if (type.equals("int-array")) {
-			type = "i32*";
-		} else
-		{
-			type = "i8*";
-		}
-		if(isField)//if lv is a field, we have to store it differently 
-		{
-			for(VarDecl varDecl: tempVTable.getFieldOffset().keySet())
-			{
-				if(varDecl.name().equals(assignStatement.lv()))
-					fieldLocation = tempVTable.getFieldOffset().get(varDecl);
-			}
-			reg = newReg();
-			emit(reg +" = getelementptr i8, i8* %this, " +type + " " + fieldLocation);
-			last = reg;
-			reg = newReg();
-			emit(reg +" = bitcast i8* " +last + " to " + type +"*");
-			emit("store "+ type +" " + lastResult + ", "+ type +"* %" + reg);
-		}
-		else //lv not a field, store into var
-			emit("store "+ type +" " + lastResult + ", "+ type +"* %" + assignStatement.lv());
-		
 	}
 	
-	private void branchCallThrowOob(String ok) {
-		// There is no possibility of nesting here so no temp is needed.
-		emit("br i1 " + ok + ", label %arr" + (arrayCounter + 1) + ", label %arr" + arrayCounter);
-		emit("arr" + arrayCounter + ":");
-		emit("call void @throw_oob()");
-		//emit("br label %arr" + (arrayCounter + 1)); // Do we really need this?
-		emit("arr" + (arrayCounter + 1) + ":");
-		arrayCounter += 2;
-	}
-	
-	private String arrayAccess(String arr, String index) {
-		String length = newReg();
-		emit(length + " = load i32, i32* " + arr);
-		String nonnegative = newReg();
-		emit(nonnegative + " = icmp sle i32 0, " + index);
-		branchCallThrowOob(nonnegative);
-		String small = newReg();
-		emit(small + " = icmp sgt i32 " + length + ", " + index);
-		branchCallThrowOob(small);
-		String ahYesArraysActuallyStartAt1 = newReg();
-		emit(ahYesArraysActuallyStartAt1 + " = add i32 1, " + index);
-		String res = newReg();
-		emit(res + " = getelementptr i32, i32* " + arr + ", i32 " + ahYesArraysActuallyStartAt1);
-		return res;
-	}
-	
-	private String getVariable(String type, String name, SymbolTable table) {
+	private String getVariablePtr(String name, String type, SymbolTable table) {
 		Vtable tempVTable = ClassTable.get(className.get(currentClass));
 		boolean isField = table.lookup(name).getIsField();
 		String reg, last;
@@ -255,15 +201,54 @@ public class TranslatorVisitor implements Visitor {
 			last = reg;
 			reg = newReg();
 			emit(reg +" = bitcast i8* " + last + " to " + type + "*");
-			last = reg;
+			return "%" + reg;
 		}
 		else
 		{
-			last = name;
+			return "%" + name;
 		}
-		reg = newReg();
-		emit(reg +" = load " +type + ", " + type + "* " + last);
+	}
+
+	@Override
+	public void visit(AssignStatement assignStatement) {
+		String type = sTable.get(assignStatement).lookup(assignStatement.lv()).getType();
+		type = translateType(type);
+		String ptr = getVariablePtr(assignStatement.lv(), type, sTable.get(assignStatement));
+		assignStatement.rv().accept(this);
+		emit("store "+ type + " " + lastResult + ", " + type + "* " + ptr);
+	}
+	
+	private void branchCallThrowOob(String ok) {
+		// There is no possibility of nesting here so no temp is needed.
+		emit("br i1 " + ok + ", label %arr" + (arrayCounter + 1) + ", label %arr" + arrayCounter);
+		emit("arr" + arrayCounter + ":");
+		emit("call void @throw_oob()");
+		//emit("br label %arr" + (arrayCounter + 1)); // Do we really need this?
+		emit("arr" + (arrayCounter + 1) + ":");
+		arrayCounter += 2;
+	}
+	
+	private String getVariable(String type, String name, SymbolTable table) {
+		String ptr = getVariablePtr(name, type, table);
+		String reg = newReg();
+		emit(reg +" = load " + type + ", " + type + "* " + ptr);
 		return reg;
+	}
+	
+	private String arrayAccess(String arr, String index) {
+		String length = newReg();
+		emit(length + " = load i32, i32* " + arr);
+		String nonnegative = newReg();
+		emit(nonnegative + " = icmp sle i32 0, " + index);
+		branchCallThrowOob(nonnegative);
+		String small = newReg();
+		emit(small + " = icmp sgt i32 " + length + ", " + index);
+		branchCallThrowOob(small);
+		String ahYesArraysActuallyStartAt1 = newReg();
+		emit(ahYesArraysActuallyStartAt1 + " = add i32 1, " + index);
+		String res = newReg();
+		emit(res + " = getelementptr i32, i32* " + arr + ", i32 " + ahYesArraysActuallyStartAt1);
+		return res;
 	}
 
 	@Override
@@ -444,20 +429,7 @@ public class TranslatorVisitor implements Visitor {
 	@Override
 	public void visit(IdentifierExpr e) {
 		String type = sTable.get(e).lookup(e.id()).getType();
-		if(type.equals("int"))
-		{
-			type = "i32";
-		}
-		else if(type.equals("boolean"))
-		{
-			type = "i1";
-		}
-		else if (type.equals("int-array")) {
-			type = "i32*";
-		} else
-		{
-			type = "i8*";
-		}
+		type = translateType(type);
 		lastResult = getVariable(type, e.id(), sTable.get(e));
 	}
 
