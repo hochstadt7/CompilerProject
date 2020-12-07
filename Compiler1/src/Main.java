@@ -36,7 +36,11 @@ public class Main {
                     throw new UnsupportedOperationException("TODO - Ex. 3");
 
                 } else if (action.equals("compile")) {
-                    throw new UnsupportedOperationException("TODO - Ex. 2");
+                	SymbolTableBuilder symbolTableBuilder=new SymbolTableBuilder();
+                    prog.accept(symbolTableBuilder);
+                    TranslatorVisitor translatorVisitor= new TranslatorVisitor(symbolTableBuilder.myVariables);
+                    prog.accept(translatorVisitor);
+                    outFile.write(translatorVisitor.emitted.toString());
 
                 } else if (action.equals("rename")) {
                     var type = args[2];
