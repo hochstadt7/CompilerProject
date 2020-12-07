@@ -186,7 +186,7 @@ public class TranslatorVisitor implements Visitor {
 		boolean isField = table.lookup(name).getIsField();
 		String reg, last;
 		int fieldLocation = 0;
-		if(isField)
+		if(isField) // If lv is a field, we have to load/store it differently.
 		{
 			for(VarDecl varDecl: tempVTable.getFieldOffset().keySet())
 			{
@@ -197,7 +197,7 @@ public class TranslatorVisitor implements Visitor {
 			emit(reg +" = getelementptr i8, i8* %this, " + type + " " + fieldLocation);
 			last = reg;
 			reg = newReg();
-			emit(reg +" = bitcast i8* " + last + " to " + type + "*");
+			emit(reg + " = bitcast i8* " + last + " to " + type + "*");
 			return "%" + reg;
 		}
 		else
