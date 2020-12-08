@@ -373,9 +373,9 @@ public class TranslatorVisitor implements Visitor {
 			if(methodDecl.name().equals(e.methodId()))
 			{
 				offset = tempVTable.getMethodOffset().get(methodDecl);
-				for (VarDecl vardecls : methodDecl.vardecls())
+				for (FormalArg formalArg: methodDecl.formals())
 				{
-					vardecls.type().accept(this);
+					formalArg.type().accept(this);
 					arg_type_list.add(lastResult);
 					arg_types += lastResult + ",";
 				}
