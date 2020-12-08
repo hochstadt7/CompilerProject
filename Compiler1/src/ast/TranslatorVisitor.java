@@ -106,6 +106,8 @@ public class TranslatorVisitor implements Visitor {
 			formalArg.type().accept(this);
 			emit("	%"+ formalArg.name() +" = alloca " + lastResult);
 		}
+		for(VarDecl varDecl: methodDecl.vardecls())
+			varDecl.accept(this);
 		for(Statement statement: methodDecl.body())
 		{
 			statement.accept(this);
