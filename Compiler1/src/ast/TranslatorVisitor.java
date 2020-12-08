@@ -9,7 +9,7 @@ public class TranslatorVisitor implements Visitor {
 	public StringBuilder emitted;
 	private int ifCounter,whileCounter, registerCounter, andCounter, arrayCounter;
 	String lastResult;
-	String currentClass;
+	AstNode currentClass;
 	Map<ClassDecl, Vtable> ClassTable; /*classes and their Vtable*/
 	Map<String,ClassDecl> className;
 	private HashMap<AstNode,SymbolTable> sTable; /* variable symbol table */
@@ -21,7 +21,6 @@ public class TranslatorVisitor implements Visitor {
 		this.andCounter = 0;
 		arrayCounter = 0;
 		this.lastResult="";
-		this.currentClass = "";
 		ClassTable=new HashMap<ClassDecl, Vtable>(); 
 		className=new HashMap<String,ClassDecl>();
 		sTable = _sTable;
@@ -69,6 +68,7 @@ public class TranslatorVisitor implements Visitor {
 
 	@Override
 	public void visit(ClassDecl classDecl) {
+		currentClass = classDecl;
 		for (MethodDecl methodDecl : classDecl.methoddecls()) {
 			methodDecl.accept(this);
 		}
@@ -182,7 +182,7 @@ public class TranslatorVisitor implements Visitor {
 	}
 	
 	private String getVariablePtr(String name, String type, SymbolTable table) {
-		Vtable tempVTable = ClassTable.get(className.get(currentClass));
+		Vtable tempVTable = ClassTable.get(currentClass);
 		boolean isField = table.lookup(name).getIsField();
 		String reg, last;
 		int fieldLocation = 0;
