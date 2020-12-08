@@ -356,7 +356,7 @@ public class TranslatorVisitor implements Visitor {
 		String func_reg;
 		ArrayList<String> arg_type_list = new ArrayList<String>(); //used to store the type of the args
 		String arg_types = "";
-		String actuals = "";
+		String actuals = "i8*, ";
 		//get the class ID of the caller
 		if(e.ownerExpr() instanceof ThisExpr)
 			type = sTable.get(e.ownerExpr()).lookup("this").getType();
