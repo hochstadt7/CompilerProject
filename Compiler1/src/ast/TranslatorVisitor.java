@@ -55,10 +55,13 @@ public class TranslatorVisitor implements Visitor {
 			
 			sufix.setLength(sufix.length()-2);
 			sufix.append("]");
-			emit(prefix+sufix.toString());
+			emit(prefix+sufix.toString()+"\n");
+			
 	}
 		}
+		emit("");
 		print_helpers_methods();
+		emit("");
 		program.mainClass().accept(this);
 		for (ClassDecl classDecl : program.classDecls()) {
 			classDecl.accept(this);
@@ -72,13 +75,14 @@ public class TranslatorVisitor implements Visitor {
 		for (MethodDecl methodDecl : classDecl.methoddecls()) {
 			methodDecl.accept(this);
 		}
+		emit("");
 	}
 
 	@Override
 	public void visit(MainClass mainClass) {
 		emit("define i32 @main() {");
 		mainClass.mainStatement().accept(this);
-		emit("}");
+		emit("}\n");
 	}
 
 	@Override
@@ -97,13 +101,13 @@ public class TranslatorVisitor implements Visitor {
 		for(FormalArg formalArg: methodDecl.formals())
 		{
 			formalArg.type().accept(this);
-			emit("%"+ formalArg.name() +" = alloca " + lastResult);
+			emit("	%"+ formalArg.name() +" = alloca " + lastResult);
 		}
 		for(Statement statement: methodDecl.body())
 		{
 			statement.accept(this);
 		}
-		emit("}");
+		emit("}\n");
 	}
 
 	@Override
@@ -118,7 +122,7 @@ public class TranslatorVisitor implements Visitor {
 		boolean isField = sTable.get(varDecl).lookup(varDecl.name()).getIsField();
 		if(!isField)
 		{
-			emit("%"+ varDecl.name() +" = alloca " + lastResult);
+			emit("	%"+ varDecl.name() +" = alloca " + lastResult);
 		}
 		
 	}
@@ -138,33 +142,33 @@ public class TranslatorVisitor implements Visitor {
 		int tempIf=this.ifCounter;
 		this.ifCounter+=3;
 		ifStatement.cond().accept(this);
-		emit("br i1 "+lastResult+", "+ "label %if"+tempIf+", label %if"+tempIf+1);
-		emit("if"+tempIf+":");
+		emit("	br i1 "+lastResult+", "+ "label %if"+tempIf+", label %if"+tempIf+1);
+		emit("	if"+tempIf+":");
 		ifStatement.thencase().accept(this);
-		emit("br label %if"+tempIf+2);
-		emit("if"+tempIf+1+":");
+		emit("	br label %if"+tempIf+2);
+		emit("	if"+tempIf+1+":");
 		ifStatement.elsecase().accept(this);
-		emit("br label %if"+tempIf+2);
-		emit("if"+tempIf+2+":");
+		emit("	br label %if"+tempIf+2);
+		emit("	if"+tempIf+2+":");
 	}
 
 	@Override
 	public void visit(WhileStatement whileStatement) {
 		int tempWhile=this.whileCounter;
 		this.whileCounter+=3;
-		emit("br label %loop"+tempWhile);
+		emit("	br label %loop"+tempWhile);
 		whileStatement.cond().accept(this);
-		emit("br i1 "+lastResult+", "+ "label %loop"+tempWhile+1+", label %loop"+tempWhile+2);
-		emit("loop"+tempWhile+1+":");
+		emit("	br i1 "+lastResult+", "+ "label %loop"+tempWhile+1+", label %loop"+tempWhile+2);
+		emit("	loop"+tempWhile+1+":");
 		whileStatement.body().accept(this);
-		emit("br label %loop"+tempWhile+2);
-		emit("loop"+tempWhile+2+":");
+		emit("	br label %loop"+tempWhile+2);
+		emit("	loop"+tempWhile+2+":");
 	}
 
 	@Override
 	public void visit(SysoutStatement sysoutStatement) {
 		sysoutStatement.arg().accept(this);
-		emit("call void (i32) @print_int(i32 "+lastResult+")");
+		emit("	call void (i32) @print_int(i32 "+lastResult+")");
 		
 	}
 	
@@ -194,10 +198,10 @@ public class TranslatorVisitor implements Visitor {
 					fieldLocation = tempVTable.getFieldOffset().get(varDecl);
 			}
 			reg = newReg();
-			emit(reg +" = getelementptr i8, i8* %this, " + type + " " + fieldLocation);
+			emit("	"+reg +" = getelementptr i8, i8* %this, " + type + " " + fieldLocation);
 			last = reg;
 			reg = newReg();
-			emit(reg + " = bitcast i8* " + last + " to " + type + "*");
+			emit("	"+reg + " = bitcast i8* " + last + " to " + type + "*");
 			return "%" + reg;
 		}
 		else
@@ -212,39 +216,39 @@ public class TranslatorVisitor implements Visitor {
 		type = translateType(type);
 		String ptr = getVariablePtr(assignStatement.lv(), type, sTable.get(assignStatement));
 		assignStatement.rv().accept(this);
-		emit("store "+ type + " " + lastResult + ", " + type + "* " + ptr);
+		emit("	store "+ type + " " + lastResult + ", " + type + "* " + ptr);
 	}
 	
 	private void branchCallThrowOob(String ok) {
 		// There is no possibility of nesting here so no temp is needed.
-		emit("br i1 " + ok + ", label %arr" + (arrayCounter + 1) + ", label %arr" + arrayCounter);
-		emit("arr" + arrayCounter + ":");
-		emit("call void @throw_oob()");
+		emit("	br i1 " + ok + ", label %arr" + (arrayCounter + 1) + ", label %arr" + arrayCounter);
+		emit("	arr" + arrayCounter + ":");
+		emit("	call void @throw_oob()");
 		//emit("br label %arr" + (arrayCounter + 1)); // Do we really need this?
-		emit("arr" + (arrayCounter + 1) + ":");
+		emit("	arr" + (arrayCounter + 1) + ":");
 		arrayCounter += 2;
 	}
 	
 	private String getVariable(String type, String name, SymbolTable table) {
 		String ptr = getVariablePtr(name, type, table);
 		String reg = newReg();
-		emit(reg +" = load " + type + ", " + type + "* " + ptr);
+		emit("	"+reg +" = load " + type + ", " + type + "* " + ptr);
 		return reg;
 	}
 	
 	private String arrayAccess(String arr, String index) {
 		String length = newReg();
-		emit(length + " = load i32, i32* " + arr);
+		emit("	"+length + " = load i32, i32* " + arr);
 		String nonnegative = newReg();
-		emit(nonnegative + " = icmp sle i32 0, " + index);
+		emit("	"+nonnegative + " = icmp sle i32 0, " + index);
 		branchCallThrowOob(nonnegative);
 		String small = newReg();
-		emit(small + " = icmp sgt i32 " + length + ", " + index);
+		emit("	"+small + " = icmp sgt i32 " + length + ", " + index);
 		branchCallThrowOob(small);
 		String ahYesArraysActuallyStartAt1 = newReg();
-		emit(ahYesArraysActuallyStartAt1 + " = add i32 1, " + index);
+		emit("	"+ahYesArraysActuallyStartAt1 + " = add i32 1, " + index);
 		String res = newReg();
-		emit(res + " = getelementptr i32, i32* " + arr + ", i32 " + ahYesArraysActuallyStartAt1);
+		emit("	"+res + " = getelementptr i32, i32* " + arr + ", i32 " + ahYesArraysActuallyStartAt1);
 		return res;
 	}
 
@@ -254,7 +258,7 @@ public class TranslatorVisitor implements Visitor {
 		assignArrayStatement.index().accept(this);
 		String place = arrayAccess(arr, lastResult);
 		assignArrayStatement.rv().accept(this);
-		emit("store i32 " + lastResult + ", i32* " + place);
+		emit("	store i32 " + lastResult + ", i32* " + place);
 	}
 
 	@Override
@@ -262,15 +266,15 @@ public class TranslatorVisitor implements Visitor {
 		int tempAnd=this.andCounter;
 		this.andCounter+=3;
 		e.e1().accept(this);
-		emit("br i1 " + lastResult + ", label %and" + tempAnd + ", label %and" + (tempAnd + 1));
-		emit("and" + tempAnd + ":");
+		emit("	br i1 " + lastResult + ", label %and" + tempAnd + ", label %and" + (tempAnd + 1));
+		emit("	and" + tempAnd + ":");
 		e.e2().accept(this);
-		emit("br label %and" + (tempAnd + 2));
-		emit("and" + (tempAnd + 1) + ":");
-		emit("br label %and" + (tempAnd + 2));
-		emit("and" + (tempAnd + 2) + ":");
+		emit("	br label %and" + (tempAnd + 2));
+		emit("	and" + (tempAnd + 1) + ":");
+		emit("	br label %and" + (tempAnd + 2));
+		emit("	and" + (tempAnd + 2) + ":");
 		String result = newReg();
-		emit(result + " = phi i1 [" + lastResult + ", %and" + tempAnd + "], [0, %and" + (tempAnd + 1) + "]");
+		emit("	"+result + " = phi i1 [" + lastResult + ", %and" + tempAnd + "], [0, %and" + (tempAnd + 1) + "]");
 		lastResult = result;
 	}
 
@@ -280,7 +284,7 @@ public class TranslatorVisitor implements Visitor {
 		String firstArg = lastResult;
 		e.e2().accept(this);
 		String result = newReg();
-		emit(result + " = icmp slt i32 " + firstArg + ", " + lastResult);
+		emit("	"+result + " = icmp slt i32 " + firstArg + ", " + lastResult);
 		lastResult = result;
 	}
 
@@ -290,7 +294,7 @@ public class TranslatorVisitor implements Visitor {
 		String firstArg = lastResult;
 		e.e2().accept(this);
 		String result = newReg();
-		emit(result + " = add i32 " + firstArg + ", " + lastResult);
+		emit("	"+result + " = add i32 " + firstArg + ", " + lastResult);
 		lastResult = result;
 	}
 
@@ -300,7 +304,7 @@ public class TranslatorVisitor implements Visitor {
 		String firstArg = lastResult;
 		e.e2().accept(this);
 		String result = newReg();
-		emit(result + " = sub i32 " + firstArg + ", " + lastResult);
+		emit("	"+result + " = sub i32 " + firstArg + ", " + lastResult);
 		lastResult = result;
 	}
 
@@ -310,7 +314,7 @@ public class TranslatorVisitor implements Visitor {
 		String firstArg = lastResult;
 		e.e2().accept(this);
 		String result = newReg();
-		emit(result + " = mul i32 " + firstArg + ", " + lastResult);
+		emit("	"+result + " = mul i32 " + firstArg + ", " + lastResult);
 		lastResult = result;
 	}
 
@@ -321,14 +325,14 @@ public class TranslatorVisitor implements Visitor {
 		e.indexExpr().accept(this);
 		String place = arrayAccess(arr, lastResult);
 		lastResult = newReg();
-		emit(lastResult + " = load i32, i32* " + place);
+		emit("	"+lastResult + " = load i32, i32* " + place);
 	}
 
 	@Override
 	public void visit(ArrayLengthExpr e) {
 		e.arrayExpr().accept(this);
 		String res = newReg();
-		emit(res + " = load i32, i32* " + lastResult);
+		emit("	"+res + " = load i32, i32* " + lastResult);
 		lastResult = res;
 	}
 
@@ -373,23 +377,23 @@ public class TranslatorVisitor implements Visitor {
 		return_val = lastResult;
 		e.ownerExpr().accept(this);
 		String ptr = newReg();
-		emit(ptr + " = load i8*, i8** " + caller);
+		emit("	"+ptr + " = load i8*, i8** " + caller);
 		String last = ptr;
 		ptr = newReg();
-		emit(ptr + " = bitcast i8* " + last + " to i8***");
+		emit("	"+ptr + " = bitcast i8* " + last + " to i8***");
 		last = ptr;
 		ptr = newReg();
-		emit(ptr + " = load i8**, i8*** " + last);
+		emit("	"+ptr + " = load i8**, i8*** " + last);
 		last = ptr;
 		ptr = newReg();
-		emit(ptr + " = getelementptr i8*, i8** " + last + ", i32 " + offset);
+		emit("	"+ptr + " = getelementptr i8*, i8** " + last + ", i32 " + offset);
 		last = ptr;
 		ptr = newReg();
-		emit(ptr + " = load i8*, i8** " + last);
+		emit("	"+ptr + " = load i8*, i8** " + last);
 		last = ptr;
 		ptr = newReg();
 		func_reg = ptr;
-		emit(ptr + " = bitcast i8* " + last + " to " + return_val + " (" + arg_types + ")*");
+		emit("	"+ptr + " = bitcast i8* " + last + " to " + return_val + " (" + arg_types + ")*");
 		last = ptr;
 		ptr = newReg();
 		actuals += "i8* " + caller;
@@ -400,11 +404,11 @@ public class TranslatorVisitor implements Visitor {
 			arg.accept(this);
 			ptr = newReg();
 			if(!(arg instanceof IntegerLiteralExpr))//no need to store int literal
-				emit(ptr + " = load "+arg_type_list.get(i)+", "+arg_type_list.get(i)+"* " + lastResult);
+				emit("	"+ptr + " = load "+arg_type_list.get(i)+", "+arg_type_list.get(i)+"* " + lastResult);
 			actuals += lastResult;
 		}
 		ptr = newReg();
-		emit(ptr + " = call "+return_val+" " + func_reg +"("+actuals+")");
+		emit("	"+ptr + " = call "+return_val+" " + func_reg +"("+actuals+")");
 		lastResult = ptr;
 	}
 
@@ -440,29 +444,29 @@ public class TranslatorVisitor implements Visitor {
 	public void visit(NewIntArrayExpr e) {
 		e.lengthExpr().accept(this);
 		String actualLen = newReg();
-		emit(actualLen + " = add i32 1, " + lastResult);
+		emit("	"+actualLen + " = add i32 1, " + lastResult);
 		String ptr = newReg();
-		emit(ptr + " = call i8* @calloc(i32 " + actualLen + ", i32 4)");
+		emit("	"+ptr + " = call i8* @calloc(i32 " + actualLen + ", i32 4)");
 		lastResult = newReg();
-		emit(lastResult + " = bitcast i8* " + ptr + " to i32*");
+		emit("	"+lastResult + " = bitcast i8* " + ptr + " to i32*");
 	}
 
 	@Override
 	public void visit(NewObjectExpr e) {
 		Vtable tempVTable=ClassTable.get(className.get(e.classId()));
 		int numMethod=tempVTable.getMethodOffset().size();
-		emit(newReg()+" = call i8* @calloc(i32 1, i32 "+tempVTable.getVtableSize()+")");
-		emit(newReg()+" = bitcast i8* %_"+(registerCounter-2)+" to i8***");
-		emit(newReg()+" = getelementptr ["+numMethod+" x i8*], ["+numMethod+" x i8*]* @."+e.classId()+"_vtable, i32 0, i32 0");
-		emit("Store i8** %_"+(registerCounter-1)+", i8*** %_"+(registerCounter-2));
-		emit("Store i8* %_"+(registerCounter-3)+", i8** %"+lastResult);/* expect here to have the variable that we created to him the new object */
+		emit("	"+newReg()+" = call i8* @calloc(i32 1, i32 "+tempVTable.getVtableSize()+")");
+		emit("	"+newReg()+" = bitcast i8* %_"+(registerCounter-2)+" to i8***");
+		emit("	"+newReg()+" = getelementptr ["+numMethod+" x i8*], ["+numMethod+" x i8*]* @."+e.classId()+"_vtable, i32 0, i32 0");
+		emit("	Store i8** %_"+(registerCounter-1)+", i8*** %_"+(registerCounter-2));
+		emit("	Store i8* %_"+(registerCounter-3)+", i8** %"+lastResult);/* expect here to have the variable that we created to him the new object */
 	}
 
 	@Override
 	public void visit(NotExpr e) {
 		e.e().accept(this);
 		String result = newReg();
-		emit(result + " = xor i1 1, " + lastResult);
+		emit("	"+result + " = xor i1 1, " + lastResult);
 		lastResult = result;
 	}
 
@@ -538,17 +542,18 @@ public class TranslatorVisitor implements Visitor {
 		emit("declare void @exit(i32)");
 		emit("@_cint = constant [4 x i8] c\"%d\\0a\\00\"");
 		emit("@_cOOB = constant [15 x i8] c\"Out of bounds\\0a\\00\"");
+		emit("");
 		emit("define void @print_int(i32 %i) {");
-		emit("%_str = bitcast [4 x i8]* @_cint to i8*");
-		emit("call i32 (i8*, ...) @printf(i8* %_str, i32 %i)");
-		emit("ret void");
-		emit("}");
+		emit("	%_str = bitcast [4 x i8]* @_cint to i8*");
+		emit("	call i32 (i8*, ...) @printf(i8* %_str, i32 %i)");
+		emit("	ret void");
+		emit("}\n");
 		emit("define void @throw_oob() {");
-		emit("%_str = bitcast [15 x i8]* @_cOOB to i8*");
-		emit("call i32 (i8*, ...) @printf(i8* %_str)");
-		emit("call void @exit(i32 1)");
-		emit("ret void");
-		emit("}");
+		emit("	%_str = bitcast [15 x i8]* @_cOOB to i8*");
+		emit("	call i32 (i8*, ...) @printf(i8* %_str)");
+		emit("	call void @exit(i32 1)");
+		emit("	ret void");
+		emit("}\n");
 	}
 
 }
