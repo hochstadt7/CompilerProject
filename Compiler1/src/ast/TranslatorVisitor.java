@@ -16,7 +16,8 @@ public class TranslatorVisitor implements Visitor {
 	
 	public TranslatorVisitor(HashMap<AstNode,SymbolTable> _sTable) {
 		emitted=new StringBuilder();
-		this.ifCounter=0; this.whileCounter=0;
+		this.ifCounter=0; 
+		this.whileCounter=0;
 		this.registerCounter = 0;
 		this.andCounter = 0;
 		arrayCounter = 0;
@@ -82,11 +83,13 @@ public class TranslatorVisitor implements Visitor {
 	public void visit(MainClass mainClass) {
 		emit("define i32 @main() {");
 		mainClass.mainStatement().accept(this);
+		emit("	ret i32 0"); /* do we need this*/
 		emit("}\n");
 	}
 
 	@Override
 	public void visit(MethodDecl methodDecl) {
+		this.ifCounter=0; this.whileCounter=0; /* every method new counters- works? */
 		String ret_type = "";
 		String formals = "";
 		methodDecl.returnType().accept(this);
@@ -142,14 +145,14 @@ public class TranslatorVisitor implements Visitor {
 		int tempIf=this.ifCounter;
 		this.ifCounter+=3;
 		ifStatement.cond().accept(this);
-		emit("	br i1 "+lastResult+", "+ "label %if"+tempIf+", label %if"+tempIf+1);
+		emit("	br i1 "+lastResult+", "+ "label %if"+tempIf+", label %if"+(tempIf+1));
 		emit("	if"+tempIf+":");
 		ifStatement.thencase().accept(this);
-		emit("	br label %if"+tempIf+2);
-		emit("	if"+tempIf+1+":");
+		emit("	br label %if"+(tempIf+2));
+		emit("	if"+(tempIf+1)+":");
 		ifStatement.elsecase().accept(this);
-		emit("	br label %if"+tempIf+2);
-		emit("	if"+tempIf+2+":");
+		emit("	br label %if"+(tempIf+2));
+		emit("	if"+(tempIf+2)+":");
 	}
 
 	@Override
@@ -157,12 +160,13 @@ public class TranslatorVisitor implements Visitor {
 		int tempWhile=this.whileCounter;
 		this.whileCounter+=3;
 		emit("	br label %loop"+tempWhile);
+		emit("	loop"+tempWhile+":");
 		whileStatement.cond().accept(this);
-		emit("	br i1 "+lastResult+", "+ "label %loop"+tempWhile+1+", label %loop"+tempWhile+2);
-		emit("	loop"+tempWhile+1+":");
+		emit("	br i1 "+lastResult+", "+ "label %loop"+(tempWhile+1)+", label %loop"+(tempWhile+2));
+		emit("	loop"+(tempWhile+1)+":");
 		whileStatement.body().accept(this);
-		emit("	br label %loop"+tempWhile+2);
-		emit("	loop"+tempWhile+2+":");
+		emit("	br label %loop"+(tempWhile+2));
+		emit("	loop"+(tempWhile+2)+":");
 	}
 
 	@Override
@@ -377,6 +381,7 @@ public class TranslatorVisitor implements Visitor {
 		return_val = lastResult;
 		e.ownerExpr().accept(this);
 		String ptr = newReg();
+		// need to store here before?? according to examples..
 		emit("	"+ptr + " = load i8*, i8** " + caller);
 		String last = ptr;
 		ptr = newReg();
@@ -455,11 +460,12 @@ public class TranslatorVisitor implements Visitor {
 	public void visit(NewObjectExpr e) {
 		Vtable tempVTable=ClassTable.get(className.get(e.classId()));
 		int numMethod=tempVTable.getMethodOffset().size();
+		/* need to check if no methods at all? */
 		emit("	"+newReg()+" = call i8* @calloc(i32 1, i32 "+tempVTable.getVtableSize()+")");
 		emit("	"+newReg()+" = bitcast i8* %_"+(registerCounter-2)+" to i8***");
 		emit("	"+newReg()+" = getelementptr ["+numMethod+" x i8*], ["+numMethod+" x i8*]* @."+e.classId()+"_vtable, i32 0, i32 0");
 		emit("	Store i8** %_"+(registerCounter-1)+", i8*** %_"+(registerCounter-2));
-		emit("	Store i8* %_"+(registerCounter-3)+", i8** %"+lastResult);/* expect here to have the variable that we created to him the new object */
+		
 	}
 
 	@Override
