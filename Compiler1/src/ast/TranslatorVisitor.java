@@ -351,7 +351,7 @@ public class TranslatorVisitor implements Visitor {
 		String type = ""; //used to store the type of the caller
 		Vtable tempVTable;
 		int offset = 0;
-		String caller = lastResult;
+		String caller;
 		String return_val;
 		String func_reg;
 		ArrayList<String> arg_type_list = new ArrayList<String>(); //used to store the type of the args
@@ -385,6 +385,7 @@ public class TranslatorVisitor implements Visitor {
 		}
 		return_val = lastResult;
 		e.ownerExpr().accept(this);
+		caller = lastResult;
 		String ptr = newReg();
 		// need to store here before?? according to examples..
 		emit("	"+ptr + " = load i8*, i8** " + caller);
