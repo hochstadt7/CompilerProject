@@ -38,10 +38,15 @@ public class TranslatorVisitor implements Visitor {
 		for (ClassDecl classDecl : program.classDecls()) {
 			Vtable myTable=BuildVtable(classDecl);
 			if(myTable.getMethodOffset().keySet().size()!=0) { /* at least one method in Vtable */
-			String prefix="@."+classDecl.name()+"_vtable = global ["+ myTable.getMethodOffset().size()+" x i8*] ";
+			String prefix="@."+classDecl.name()+"_vtable = global ["+ myTable.getMethodOffset().size()+" x i8*] [";
 			StringBuilder sufix=new StringBuilder();
-			for (MethodDecl methodDecl:myTable.getMethodOffset().keySet()) {
-				sufix.append("[i8* bitcast (");
+			Map<Integer, MethodDecl> reverseMap = new HashMap<Integer, MethodDecl>();
+			for (Map.Entry<MethodDecl, Integer> entry : myTable.getMethodOffset().entrySet()) {
+				reverseMap.put(entry.getValue(), entry.getKey());
+			}
+			for(int i=0; i<reverseMap.size(); i++) {
+				MethodDecl methodDecl=reverseMap.get(i);
+				sufix.append("i8* bitcast (");
 				methodDecl.returnType().accept(this);
 				sufix.append(lastResult);
 				sufix.append(" (i8*, ");
@@ -54,6 +59,7 @@ public class TranslatorVisitor implements Visitor {
 				sufix.setLength(sufix.length()-2);
 				sufix.append(")* @"+classDecl.name()+"."+methodDecl.name()+" to i8*), ");
 			}
+			
 			
 			sufix.setLength(sufix.length()-2);
 			sufix.append("]");
