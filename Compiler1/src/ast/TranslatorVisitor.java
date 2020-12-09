@@ -484,7 +484,7 @@ public class TranslatorVisitor implements Visitor {
 		emit("	"+newReg()+" = call i8* @calloc(i32 1, i32 "+tempVTable.getVtableSize()+")");
 		emit("	"+newReg()+" = bitcast i8* %_"+(registerCounter-2)+" to i8***");
 		emit("	"+newReg()+" = getelementptr ["+numMethod+" x i8*], ["+numMethod+" x i8*]* @."+e.classId()+"_vtable, i32 0, i32 0");
-		emit("	Store i8** %_"+(registerCounter-1)+", i8*** %_"+(registerCounter-2));
+		emit("	store i8** %_"+(registerCounter-1)+", i8*** %_"+(registerCounter-2));
 		
 	}
 
