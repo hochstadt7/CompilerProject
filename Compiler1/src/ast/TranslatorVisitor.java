@@ -380,7 +380,9 @@ public class TranslatorVisitor implements Visitor {
 					arg_types += lastResult + ",";
 				}
 				methodDecl.returnType().accept(this);
-				arg_types = arg_types.substring(0, arg_types.length() - 1);
+				if (arg_types.length() > 0) {
+					arg_types = arg_types.substring(0, arg_types.length() - 1);
+				}
 			}
 		}
 		return_val = lastResult;
