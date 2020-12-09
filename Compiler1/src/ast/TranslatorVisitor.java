@@ -10,7 +10,7 @@ public class TranslatorVisitor implements Visitor {
 	public StringBuilder emitted;
 	private int ifCounter,whileCounter, registerCounter, andCounter, arrayCounter;
 	String lastResult;
-	AstNode currentClass;
+	ClassDecl currentClass;
 	Map<ClassDecl, Vtable> ClassTable; /*classes and their Vtable*/
 	Map<String,ClassDecl> className;
 	private HashMap<AstNode,SymbolTable> sTable; /* variable symbol table */
@@ -108,7 +108,7 @@ public class TranslatorVisitor implements Visitor {
 			formals += ", " + lastResult + " %."+formalArg.name();
 			
 		}
-		emit("define "+ret_type+" @" + methodDecl.name() + "(i8* %this" + formals +") {");
+		emit("define "+ret_type+" @" +currentClass.name()+"."+ methodDecl.name() + "(i8* %this" + formals +") {");
 		for(FormalArg formalArg: methodDecl.formals())
 		{
 			formalArg.type().accept(this);
