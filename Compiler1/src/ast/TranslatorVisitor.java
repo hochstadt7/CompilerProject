@@ -214,7 +214,7 @@ public class TranslatorVisitor implements Visitor {
 					fieldLocation = tempVTable.getFieldOffset().get(varDecl);
 			}
 			reg = newReg();
-			emit("	"+reg +" = getelementptr i8, i8* %this, " + type + " " + fieldLocation);
+			emit("	"+reg +" = getelementptr i8, i8* %this, i32 " + fieldLocation);
 			last = reg;
 			reg = newReg();
 			emit("	"+reg + " = bitcast i8* " + last + " to " + type + "*");
