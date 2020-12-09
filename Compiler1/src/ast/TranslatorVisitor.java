@@ -2,6 +2,7 @@ package ast;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.ListIterator;
 import java.util.Map;
 
 public class TranslatorVisitor implements Visitor {
@@ -73,8 +74,9 @@ public class TranslatorVisitor implements Visitor {
 	@Override
 	public void visit(ClassDecl classDecl) {
 		currentClass = classDecl;
-		for (MethodDecl methodDecl : classDecl.methoddecls()) {
-			methodDecl.accept(this);
+		ListIterator<MethodDecl> iter = classDecl.methoddecls().listIterator(classDecl.methoddecls().size());
+		while(iter.hasPrevious()) {
+			iter.previous().accept(this);
 		}
 		emit("");
 	}
