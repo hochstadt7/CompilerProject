@@ -413,7 +413,11 @@ public class TranslatorVisitor implements Visitor {
 		last = ptr;
 		ptr = newReg();
 		func_reg = ptr;
-		emit("	"+ptr + " = bitcast i8* " + last + " to " + return_val + " (" +"i8*, "+ arg_types + ")*");
+		if (arg_types.length() > 0)
+			emit("	"+ptr + " = bitcast i8* " + last + " to " + return_val + " (" +"i8*, "+ arg_types + ")*");
+		else
+			emit("	"+ptr + " = bitcast i8* " + last + " to " + return_val + " (i8*)*");
+			
 		last = ptr;
 		ptr = newReg();
 		actuals += "i8* " + caller;
