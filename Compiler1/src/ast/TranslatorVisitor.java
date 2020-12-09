@@ -113,8 +113,7 @@ public class TranslatorVisitor implements Visitor {
 			statement.accept(this);
 		}
 		methodDecl.ret().accept(this);
-		ret_type=lastResult;
-		emit("ret "+ translateType(ret_type)+ " "+lastResult); /* assuming regular functions doesn't return void type */
+		emit("ret "+ ret_type+ " "+lastResult); /* assuming regular functions doesn't return void type */
 		emit("}\n");
 	}
 
