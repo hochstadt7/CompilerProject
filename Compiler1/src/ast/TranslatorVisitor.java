@@ -233,7 +233,7 @@ public class TranslatorVisitor implements Visitor {
 		type = translateType(type);
 		String ptr = getVariablePtr(assignStatement.lv(), type, sTable.get(assignStatement));
 		assignStatement.rv().accept(this);
-		emit("	store "+ type + " " + lastResult + ", " + type + "* " + ptr);
+		emit("	store " + type + " " + lastResult + ", " + type + "* " + ptr);
 	}
 	
 	private void branchCallThrowOob(String ok) {
@@ -471,12 +471,14 @@ public class TranslatorVisitor implements Visitor {
 	@Override
 	public void visit(NewIntArrayExpr e) {
 		e.lengthExpr().accept(this);
+		String length = lastResult;
 		String actualLen = newReg();
-		emit("	"+actualLen + " = add i32 1, " + lastResult);
+		emit("	" + actualLen + " = add i32 1, " + length);
 		String ptr = newReg();
-		emit("	"+ptr + " = call i8* @calloc(i32 " + actualLen + ", i32 4)");
+		emit("	" + ptr + " = call i8* @calloc(i32 " + actualLen + ", i32 4)");
 		lastResult = newReg();
-		emit("	"+lastResult + " = bitcast i8* " + ptr + " to i32*");
+		emit("	" + lastResult + " = bitcast i8* " + ptr + " to i32*");
+		emit("  store i32 " + length + ", i32* " + lastResult);
 	}
 
 	@Override
