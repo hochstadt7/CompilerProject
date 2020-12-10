@@ -579,9 +579,7 @@ public class TranslatorVisitor implements Visitor {
 			for(int i=0; i<orderedfiled.size(); i++) {
 				vtable.addField(orderedfiled.get(i));
 			}
-			for(VarDecl varDecl:parentTable.getFieldOffset().keySet()) {
-				vtable.addField(varDecl);
-			}
+			
 		}
 		
 		for (VarDecl field : classDecl.fields()) {
