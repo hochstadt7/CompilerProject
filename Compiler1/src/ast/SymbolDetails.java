@@ -13,6 +13,7 @@ public class SymbolDetails {
 	    this.isField = isField;
 	}
 	
+	
 	public String getType() {
 		return this.type;
 	}

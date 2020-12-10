@@ -13,6 +13,7 @@ public class TranslatorVisitor implements Visitor {
 	ClassDecl currentClass;
 	Map<ClassDecl, Vtable> ClassTable; /*classes and their Vtable*/
 	Map<String,ClassDecl> className;
+	Map<MethodDecl,ClassDecl> ownerOfMethod;
 	private HashMap<AstNode,SymbolTable> sTable; /* variable symbol table */
 	
 	public TranslatorVisitor(HashMap<AstNode,SymbolTable> _sTable) {
@@ -25,9 +26,23 @@ public class TranslatorVisitor implements Visitor {
 		this.lastResult = "";
 		ClassTable = new HashMap<ClassDecl, Vtable>(); 
 		className = new HashMap<String,ClassDecl>();
+		ownerOfMethod=new HashMap<MethodDecl,ClassDecl>();
 		sTable = _sTable;
 	}
 
+	public ClassDecl getClassOwner(ClassDecl classDecl,String name) {
+		
+		for(MethodDecl methodDecl:classDecl.methoddecls()) {
+			if(methodDecl.name().equals(name)) {
+				return classDecl;
+			}
+		}
+		String parent=classDecl.superName();
+		if(parent!=null)
+			return getClassOwner(className.get(parent),name);
+		return null;
+		
+	}
 	
 	@Override
 	public void visit(Program program) {
@@ -57,7 +72,8 @@ public class TranslatorVisitor implements Visitor {
 				}
 				sufix.append(formalArgs.toString());
 				sufix.setLength(sufix.length()-2);
-				sufix.append(")* @" + classDecl.name() + "." + methodDecl.name() + " to i8*), ");
+				ClassDecl owner=getClassOwner(classDecl,methodDecl.name());
+				sufix.append(")* @" + owner.name() + "." + methodDecl.name() + " to i8*), ");
 			}
 			
 			
@@ -539,8 +555,8 @@ public class TranslatorVisitor implements Visitor {
 		return "%_" + registerCounter++;
 	}
 	
-	public boolean hasMethodName(String name,ClassDecl classDecl) {
-		for(MethodDecl methodDecl:classDecl.methoddecls())
+	public boolean hasMethodName(String name,Map<MethodDecl,Integer> searchMe) {
+		for(MethodDecl methodDecl:searchMe.keySet())
 		{
 			if(methodDecl.name().equals(name))
 				return true;
@@ -554,21 +570,30 @@ public class TranslatorVisitor implements Visitor {
 		Vtable vtable = new Vtable();
 		if(classDecl.superName() != null) {
 			Vtable parentTable = ClassTable.get(className.get(classDecl.superName()));
-			for(MethodDecl methodDecl:parentTable.getMethodOffset().keySet()) {
-				if(!hasMethodName(methodDecl.name(),classDecl))
-					vtable.addMethod(methodDecl);
+			Map<Integer, MethodDecl> reverseMap = new HashMap<Integer, MethodDecl>();
+			for (Map.Entry<MethodDecl, Integer> entry : parentTable.getMethodOffset().entrySet()) {
+				reverseMap.put(entry.getValue(), entry.getKey());
+			}
+			for(int i=0; i<reverseMap.size(); i++) {
+					vtable.addMethod(reverseMap.get(i));
 			}
 			for(VarDecl varDecl:parentTable.getFieldOffset().keySet()) {/*fields can't be "overriden"*/
 				vtable.addField(varDecl);
 			}
 		}
 		
-		for (MethodDecl methodDecl : classDecl.methoddecls()) {
-			vtable.addMethod(methodDecl);
-		}
 		for (VarDecl field : classDecl.fields()) {
 			vtable.addField(field);
 		}
+		
+		
+		for(MethodDecl methodDecl:classDecl.methoddecls()) {
+			ownerOfMethod.put(methodDecl, classDecl);
+			if(!(hasMethodName(methodDecl.name(),vtable.getMethodOffset()))) {
+					vtable.addMethod(methodDecl);
+			}
+		}
+		
 		ClassTable.put(classDecl, vtable);
 		return vtable;
 	}
