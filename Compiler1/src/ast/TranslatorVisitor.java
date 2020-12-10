@@ -80,9 +80,9 @@ public class TranslatorVisitor implements Visitor {
 	@Override
 	public void visit(ClassDecl classDecl) {
 		currentClass = classDecl;
-		ListIterator<MethodDecl> iter = classDecl.methoddecls().listIterator(classDecl.methoddecls().size());
-		while(iter.hasPrevious()) {
-			iter.previous().accept(this);
+		ListIterator<MethodDecl> iter = classDecl.methoddecls().listIterator(0);
+		while(iter.hasNext()) {
+			iter.next().accept(this);
 		}
 		emit("");
 	}
