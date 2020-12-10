@@ -472,6 +472,9 @@ public class TranslatorVisitor implements Visitor {
 	public void visit(NewIntArrayExpr e) {
 		e.lengthExpr().accept(this);
 		String length = lastResult;
+		String nonnegative = newReg();
+		emit("	"+nonnegative + " = icmp sle i32 0, " + length);
+		branchCallThrowOob(nonnegative);
 		String actualLen = newReg();
 		emit("	" + actualLen + " = add i32 1, " + length);
 		String ptr = newReg();
