@@ -97,7 +97,7 @@ public class TranslatorVisitor implements Visitor {
 
 	@Override
 	public void visit(MethodDecl methodDecl) {
-		this.ifCounter=0; this.whileCounter=0; /* every method new counters- works? */
+		this.ifCounter=0; this.whileCounter=0; this.registerCounter = 0; /* every method new counters- works? */
 		String ret_type = "";
 		String formals = "";
 		methodDecl.returnType().accept(this);
@@ -113,6 +113,7 @@ public class TranslatorVisitor implements Visitor {
 		{
 			formalArg.type().accept(this);
 			emit("	%"+ formalArg.name() +" = alloca " + lastResult);
+			emit("	"+ "store " + lastResult + " %." + formalArg.name() + ", " + lastResult + "* %" + formalArg.name());
 		}
 		for(VarDecl varDecl: methodDecl.vardecls())
 			varDecl.accept(this);
