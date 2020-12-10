@@ -16,15 +16,15 @@ public class TranslatorVisitor implements Visitor {
 	private HashMap<AstNode,SymbolTable> sTable; /* variable symbol table */
 	
 	public TranslatorVisitor(HashMap<AstNode,SymbolTable> _sTable) {
-		emitted=new StringBuilder();
-		this.ifCounter=0; 
-		this.whileCounter=0;
+		emitted = new StringBuilder();
+		this.ifCounter = 0; 
+		this.whileCounter = 0;
 		this.registerCounter = 0;
 		this.andCounter = 0;
 		arrayCounter = 0;
-		this.lastResult="";
-		ClassTable=new HashMap<ClassDecl, Vtable>(); 
-		className=new HashMap<String,ClassDecl>();
+		this.lastResult = "";
+		ClassTable = new HashMap<ClassDecl, Vtable>(); 
+		className = new HashMap<String,ClassDecl>();
 		sTable = _sTable;
 	}
 
@@ -36,21 +36,21 @@ public class TranslatorVisitor implements Visitor {
 			className.put(classDecl.name(), classDecl);
 		
 		for (ClassDecl classDecl : program.classDecls()) {
-			Vtable myTable=BuildVtable(classDecl);
-			if(myTable.getMethodOffset().keySet().size()!=0) { /* at least one method in Vtable */
-			String prefix="@." + classDecl.name() + "_vtable = global [" + myTable.getMethodOffset().size() + " x i8*] [";
-			StringBuilder sufix=new StringBuilder();
+			Vtable myTable = BuildVtable(classDecl);
+			if(myTable.getMethodOffset().keySet().size() != 0) { /* at least one method in Vtable */
+			String prefix = "@." + classDecl.name() + "_vtable = global [" + myTable.getMethodOffset().size() + " x i8*] [";
+			StringBuilder sufix = new StringBuilder();
 			Map<Integer, MethodDecl> reverseMap = new HashMap<Integer, MethodDecl>();
 			for (Map.Entry<MethodDecl, Integer> entry : myTable.getMethodOffset().entrySet()) {
 				reverseMap.put(entry.getValue(), entry.getKey());
 			}
-			for(int i=0; i<reverseMap.size(); i++) {
-				MethodDecl methodDecl=reverseMap.get(i);
+			for(int i = 0; i<reverseMap.size(); i++) {
+				MethodDecl methodDecl = reverseMap.get(i);
 				sufix.append("i8* bitcast (");
 				methodDecl.returnType().accept(this);
 				sufix.append(lastResult);
 				sufix.append(" (i8*, ");
-				StringBuilder formalArgs=new StringBuilder();
+				StringBuilder formalArgs = new StringBuilder();
 				for (FormalArg formalArg: methodDecl.formals()) {
 					formalArg.type().accept(this);
 					formalArgs.append(lastResult + ", ");
@@ -97,7 +97,7 @@ public class TranslatorVisitor implements Visitor {
 
 	@Override
 	public void visit(MethodDecl methodDecl) {
-		this.ifCounter=0; this.whileCounter=0; this.registerCounter = 0; /* every method new counters- works? */
+		this.ifCounter = 0; this.whileCounter = 0; this.registerCounter = 0; /* every method new counters- works? */
 		String ret_type = "";
 		String formals = "";
 		methodDecl.returnType().accept(this);
@@ -155,7 +155,7 @@ public class TranslatorVisitor implements Visitor {
 
 	@Override
 	public void visit(IfStatement ifStatement) {
-		int tempIf=this.ifCounter;
+		int tempIf = this.ifCounter;
 		this.ifCounter += 3;
 		ifStatement.cond().accept(this);
 		emit("	br i1 " + lastResult + ", " + "label %if" + tempIf + ", label %if" + (tempIf + 1));
@@ -170,7 +170,7 @@ public class TranslatorVisitor implements Visitor {
 
 	@Override
 	public void visit(WhileStatement whileStatement) {
-		int tempWhile=this.whileCounter;
+		int tempWhile = this.whileCounter;
 		this.whileCounter += 3;
 		emit("	br label %loop" + tempWhile);
 		emit("	loop" + tempWhile + ":");
@@ -280,7 +280,7 @@ public class TranslatorVisitor implements Visitor {
 
 	@Override
 	public void visit(AndExpr e) {
-		int tempAnd=this.andCounter;
+		int tempAnd = this.andCounter;
 		this.andCounter += 3;
 		e.e1().accept(this);
 		emit("	br i1 " + lastResult + ", label %and" + tempAnd + ", label %and" + (tempAnd + 1));
@@ -373,7 +373,7 @@ public class TranslatorVisitor implements Visitor {
 		else if(e.ownerExpr() instanceof IdentifierExpr)
 			type = sTable.get(e.ownerExpr()).lookup(((IdentifierExpr) e.ownerExpr()).id()).getType();
 		//get Vtable of class
-		tempVTable=ClassTable.get(className.get(type));
+		tempVTable = ClassTable.get(className.get(type));
 		//using the Vtable to get the actual types
 		for(MethodDecl methodDecl:tempVTable.getMethodOffset().keySet())
 		{
@@ -486,10 +486,10 @@ public class TranslatorVisitor implements Visitor {
 
 	@Override
 	public void visit(NewObjectExpr e) {
-		Vtable tempVTable=ClassTable.get(className.get(e.classId()));
-		int numMethod=tempVTable.getMethodOffset().size();
+		Vtable tempVTable = ClassTable.get(className.get(e.classId()));
+		int numMethod = tempVTable.getMethodOffset().size();
 		/* need to check if no methods at all? */
-		lastResult=newReg();
+		lastResult = newReg();
 		emit("	" + lastResult + " = call i8* @calloc(i32 1, i32 " + tempVTable.getVtableSize() + ")");
 		emit("	" + newReg() + " = bitcast i8* %_" + (registerCounter-2) + " to i8***");
 		
@@ -551,9 +551,9 @@ public class TranslatorVisitor implements Visitor {
 	/*build Vtable for classDecl*/
 	public Vtable BuildVtable(ClassDecl classDecl) {
 		
-		Vtable vtable=new Vtable();
-		if(classDecl.superName()!=null) {
-			Vtable parentTable=ClassTable.get(className.get(classDecl.superName()));
+		Vtable vtable = new Vtable();
+		if(classDecl.superName() != null) {
+			Vtable parentTable = ClassTable.get(className.get(classDecl.superName()));
 			for(MethodDecl methodDecl:parentTable.getMethodOffset().keySet()) {
 				if(!hasMethodName(methodDecl.name(),classDecl))
 					vtable.addMethod(methodDecl);
