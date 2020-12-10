@@ -38,7 +38,7 @@ public class TranslatorVisitor implements Visitor {
 		for (ClassDecl classDecl : program.classDecls()) {
 			Vtable myTable=BuildVtable(classDecl);
 			if(myTable.getMethodOffset().keySet().size()!=0) { /* at least one method in Vtable */
-			String prefix="@."+classDecl.name()+"_vtable = global ["+ myTable.getMethodOffset().size()+" x i8*] [";
+			String prefix="@." + classDecl.name() + "_vtable = global [" + myTable.getMethodOffset().size() + " x i8*] [";
 			StringBuilder sufix=new StringBuilder();
 			Map<Integer, MethodDecl> reverseMap = new HashMap<Integer, MethodDecl>();
 			for (Map.Entry<MethodDecl, Integer> entry : myTable.getMethodOffset().entrySet()) {
@@ -53,17 +53,17 @@ public class TranslatorVisitor implements Visitor {
 				StringBuilder formalArgs=new StringBuilder();
 				for (FormalArg formalArg: methodDecl.formals()) {
 					formalArg.type().accept(this);
-					formalArgs.append(lastResult+", ");
+					formalArgs.append(lastResult + ", ");
 				}
 				sufix.append(formalArgs.toString());
 				sufix.setLength(sufix.length()-2);
-				sufix.append(")* @"+classDecl.name()+"."+methodDecl.name()+" to i8*), ");
+				sufix.append(")* @" + classDecl.name() + "." + methodDecl.name() + " to i8*), ");
 			}
 			
 			
 			sufix.setLength(sufix.length()-2);
 			sufix.append("]");
-			emit(prefix+sufix.toString()+"\n");
+			emit(prefix + sufix.toString() + "\n");
 			
 	}
 		}
@@ -105,15 +105,15 @@ public class TranslatorVisitor implements Visitor {
 		for(FormalArg formalArg: methodDecl.formals())
 		{
 			formalArg.type().accept(this);
-			formals += ", " + lastResult + " %."+formalArg.name();
+			formals += ", " + lastResult + " %." + formalArg.name();
 			
 		}
-		emit("define "+ret_type+" @" +currentClass.name()+"."+ methodDecl.name() + "(i8* %this" + formals +") {");
+		emit("define " + ret_type + " @" + currentClass.name() + "." + methodDecl.name() + "(i8* %this" + formals + ") {");
 		for(FormalArg formalArg: methodDecl.formals())
 		{
 			formalArg.type().accept(this);
-			emit("	%"+ formalArg.name() +" = alloca " + lastResult);
-			emit("	"+ "store " + lastResult + " %." + formalArg.name() + ", " + lastResult + "* %" + formalArg.name());
+			emit("	%" + formalArg.name() + " = alloca " + lastResult);
+			emit("	" + "store " + lastResult + " %." + formalArg.name() + ", " + lastResult + "* %" + formalArg.name());
 		}
 		for(VarDecl varDecl: methodDecl.vardecls())
 			varDecl.accept(this);
@@ -122,7 +122,7 @@ public class TranslatorVisitor implements Visitor {
 			statement.accept(this);
 		}
 		methodDecl.ret().accept(this);
-		emit("ret "+ ret_type+ " "+lastResult); /* assuming regular functions doesn't return void type */
+		emit("ret " + ret_type + " " + lastResult); /* assuming regular functions doesn't return void type */
 		emit("}\n");
 	}
 
@@ -138,7 +138,7 @@ public class TranslatorVisitor implements Visitor {
 		boolean isField = sTable.get(varDecl).lookup(varDecl.name()).getIsField();
 		if(!isField)
 		{
-			emit("	%"+ varDecl.name() +" = alloca " + lastResult);
+			emit("	%" + varDecl.name() + " = alloca " + lastResult);
 		}
 		
 	}
@@ -156,36 +156,36 @@ public class TranslatorVisitor implements Visitor {
 	@Override
 	public void visit(IfStatement ifStatement) {
 		int tempIf=this.ifCounter;
-		this.ifCounter+=3;
+		this.ifCounter += 3;
 		ifStatement.cond().accept(this);
-		emit("	br i1 "+lastResult+", "+ "label %if"+tempIf+", label %if"+(tempIf+1));
-		emit("	if"+tempIf+":");
+		emit("	br i1 " + lastResult + ", " + "label %if" + tempIf + ", label %if" + (tempIf + 1));
+		emit("	if" + tempIf + ":");
 		ifStatement.thencase().accept(this);
-		emit("	br label %if"+(tempIf+2));
-		emit("	if"+(tempIf+1)+":");
+		emit("	br label %if" + (tempIf + 2));
+		emit("	if" + (tempIf + 1) + ":");
 		ifStatement.elsecase().accept(this);
-		emit("	br label %if"+(tempIf+2));
-		emit("	if"+(tempIf+2)+":");
+		emit("	br label %if" + (tempIf + 2));
+		emit("	if" + (tempIf + 2) + ":");
 	}
 
 	@Override
 	public void visit(WhileStatement whileStatement) {
 		int tempWhile=this.whileCounter;
-		this.whileCounter+=3;
-		emit("	br label %loop"+tempWhile);
-		emit("	loop"+tempWhile+":");
+		this.whileCounter += 3;
+		emit("	br label %loop" + tempWhile);
+		emit("	loop" + tempWhile + ":");
 		whileStatement.cond().accept(this);
-		emit("	br i1 "+lastResult+", "+ "label %loop"+(tempWhile+1)+", label %loop"+(tempWhile+2));
-		emit("	loop"+(tempWhile+1)+":");
+		emit("	br i1 " + lastResult + ", " + "label %loop" + (tempWhile + 1) + ", label %loop" + (tempWhile + 2));
+		emit("	loop" + (tempWhile + 1) + ":");
 		whileStatement.body().accept(this);
-		emit("	br label %loop"+(tempWhile));
-		emit("	loop"+(tempWhile+2)+":");
+		emit("	br label %loop" + (tempWhile));
+		emit("	loop" + (tempWhile + 2) + ":");
 	}
 
 	@Override
 	public void visit(SysoutStatement sysoutStatement) {
 		sysoutStatement.arg().accept(this);
-		emit("	call void (i32) @print_int(i32 "+lastResult+")");
+		emit("	call void (i32) @print_int(i32 " + lastResult + ")");
 		
 	}
 	
@@ -215,10 +215,10 @@ public class TranslatorVisitor implements Visitor {
 					fieldLocation = tempVTable.getFieldOffset().get(varDecl);
 			}
 			reg = newReg();
-			emit("	"+reg +" = getelementptr i8, i8* %this, i32 " + fieldLocation);
+			emit("	" + reg + " = getelementptr i8, i8* %this, i32 " + fieldLocation);
 			last = reg;
 			reg = newReg();
-			emit("	"+reg + " = bitcast i8* " + last + " to " + type + "*");
+			emit("	" + reg + " = bitcast i8* " + last + " to " + type + "*");
 			return reg;
 		}
 		else
@@ -249,23 +249,23 @@ public class TranslatorVisitor implements Visitor {
 	private String getVariable(String type, String name, SymbolTable table) {
 		String ptr = getVariablePtr(name, type, table);
 		String reg = newReg();
-		emit("	"+reg +" = load " + type + ", " + type + "* " + ptr);
+		emit("	" + reg + " = load " + type + ", " + type + "* " + ptr);
 		return reg;
 	}
 	
 	private String arrayAccess(String arr, String index) {
 		String length = newReg();
-		emit("	"+length + " = load i32, i32* " + arr);
+		emit("	" + length + " = load i32, i32* " + arr);
 		String nonnegative = newReg();
-		emit("	"+nonnegative + " = icmp sle i32 0, " + index);
+		emit("	" + nonnegative + " = icmp sle i32 0, " + index);
 		branchCallThrowOob(nonnegative);
 		String small = newReg();
-		emit("	"+small + " = icmp sgt i32 " + length + ", " + index);
+		emit("	" + small + " = icmp sgt i32 " + length + ", " + index);
 		branchCallThrowOob(small);
 		String ahYesArraysActuallyStartAt1 = newReg();
-		emit("	"+ahYesArraysActuallyStartAt1 + " = add i32 1, " + index);
+		emit("	" + ahYesArraysActuallyStartAt1 + " = add i32 1, " + index);
 		String res = newReg();
-		emit("	"+res + " = getelementptr i32, i32* " + arr + ", i32 " + ahYesArraysActuallyStartAt1);
+		emit("	" + res + " = getelementptr i32, i32* " + arr + ", i32 " + ahYesArraysActuallyStartAt1);
 		return res;
 	}
 
@@ -281,7 +281,7 @@ public class TranslatorVisitor implements Visitor {
 	@Override
 	public void visit(AndExpr e) {
 		int tempAnd=this.andCounter;
-		this.andCounter+=3;
+		this.andCounter += 3;
 		e.e1().accept(this);
 		emit("	br i1 " + lastResult + ", label %and" + tempAnd + ", label %and" + (tempAnd + 1));
 		emit("	and" + tempAnd + ":");
@@ -291,7 +291,7 @@ public class TranslatorVisitor implements Visitor {
 		emit("	br label %and" + (tempAnd + 2));
 		emit("	and" + (tempAnd + 2) + ":");
 		String result = newReg();
-		emit("	"+result + " = phi i1 [" + lastResult + ", %and" + tempAnd + "], [0, %and" + (tempAnd + 1) + "]");
+		emit("	" + result + " = phi i1 [" + lastResult + ", %and" + tempAnd + "], [0, %and" + (tempAnd + 1) + "]");
 		lastResult = result;
 	}
 
@@ -301,7 +301,7 @@ public class TranslatorVisitor implements Visitor {
 		String firstArg = lastResult;
 		e.e2().accept(this);
 		String result = newReg();
-		emit("	"+result + " = icmp slt i32 " + firstArg + ", " + lastResult);
+		emit("	" + result + " = icmp slt i32 " + firstArg + ", " + lastResult);
 		lastResult = result;
 	}
 
@@ -311,7 +311,7 @@ public class TranslatorVisitor implements Visitor {
 		String firstArg = lastResult;
 		e.e2().accept(this);
 		String result = newReg();
-		emit("	"+result + " = add i32 " + firstArg + ", " + lastResult);
+		emit("	" + result + " = add i32 " + firstArg + ", " + lastResult);
 		lastResult = result;
 	}
 
@@ -321,7 +321,7 @@ public class TranslatorVisitor implements Visitor {
 		String firstArg = lastResult;
 		e.e2().accept(this);
 		String result = newReg();
-		emit("	"+result + " = sub i32 " + firstArg + ", " + lastResult);
+		emit("	" + result + " = sub i32 " + firstArg + ", " + lastResult);
 		lastResult = result;
 	}
 
@@ -331,7 +331,7 @@ public class TranslatorVisitor implements Visitor {
 		String firstArg = lastResult;
 		e.e2().accept(this);
 		String result = newReg();
-		emit("	"+result + " = mul i32 " + firstArg + ", " + lastResult);
+		emit("	" + result + " = mul i32 " + firstArg + ", " + lastResult);
 		lastResult = result;
 	}
 
@@ -342,14 +342,14 @@ public class TranslatorVisitor implements Visitor {
 		e.indexExpr().accept(this);
 		String place = arrayAccess(arr, lastResult);
 		lastResult = newReg();
-		emit("	"+lastResult + " = load i32, i32* " + place);
+		emit("	" + lastResult + " = load i32, i32* " + place);
 	}
 
 	@Override
 	public void visit(ArrayLengthExpr e) {
 		e.arrayExpr().accept(this);
 		String res = newReg();
-		emit("	"+res + " = load i32, i32* " + lastResult);
+		emit("	" + res + " = load i32, i32* " + lastResult);
 		lastResult = res;
 	}
 
@@ -398,26 +398,26 @@ public class TranslatorVisitor implements Visitor {
 		caller = lastResult;
 		String ptr = newReg();
 		// need to store here before?? according to examples..
-		//emit("	"+ptr + " = load i8*, i8** " + caller);
+		//emit("	" + ptr + " = load i8*, i8** " + caller);
 		String last = ptr;
 		//ptr = newReg();
-		emit("	"+ptr + " = bitcast i8* " + caller + " to i8***");
+		emit("	" + ptr + " = bitcast i8* " + caller + " to i8***");
 		last = ptr;
 		ptr = newReg();
-		emit("	"+ptr + " = load i8**, i8*** " + last);
+		emit("	" + ptr + " = load i8**, i8*** " + last);
 		last = ptr;
 		ptr = newReg();
-		emit("	"+ptr + " = getelementptr i8*, i8** " + last + ", i32 " + offset);
+		emit("	" + ptr + " = getelementptr i8*, i8** " + last + ", i32 " + offset);
 		last = ptr;
 		ptr = newReg();
-		emit("	"+ptr + " = load i8*, i8** " + last);
+		emit("	" + ptr + " = load i8*, i8** " + last);
 		last = ptr;
 		ptr = newReg();
 		func_reg = ptr;
 		if (arg_types.length() > 0)
-			emit("	"+ptr + " = bitcast i8* " + last + " to " + return_val + " (" +"i8*, "+ arg_types + ")*");
+			emit("	" + ptr + " = bitcast i8* " + last + " to " + return_val + " (" + "i8*, " + arg_types + ")*");
 		else
-			emit("	"+ptr + " = bitcast i8* " + last + " to " + return_val + " (i8*)*");
+			emit("	" + ptr + " = bitcast i8* " + last + " to " + return_val + " (i8*)*");
 			
 		actuals += "i8* " + caller;
 		//store actuals and build actual string
@@ -428,14 +428,14 @@ public class TranslatorVisitor implements Visitor {
 			/*
 			ptr = newReg();
 			if(!(arg instanceof IntegerLiteralExpr))//no need to store int literal
-				emit("	"+ptr + " = load "+arg_type_list.get(i)+", "+arg_type_list.get(i)+"* " + lastResult);
+				emit("	" + ptr + " = load " + arg_type_list.get(i) + ", " + arg_type_list.get(i) + "* " + lastResult);
 				*/
 			actuals += lastResult;
 			i++;
 		}
 		last = ptr;
 		ptr = newReg();
-		emit("	"+ptr + " = call "+return_val+" " + func_reg +"("+actuals+")");
+		emit("	" + ptr + " = call " + return_val + " " + func_reg + "(" + actuals + ")");
 		lastResult = ptr;
 		
 	}
@@ -473,7 +473,7 @@ public class TranslatorVisitor implements Visitor {
 		e.lengthExpr().accept(this);
 		String length = lastResult;
 		String nonnegative = newReg();
-		emit("	"+nonnegative + " = icmp sle i32 0, " + length);
+		emit("	" + nonnegative + " = icmp sle i32 0, " + length);
 		branchCallThrowOob(nonnegative);
 		String actualLen = newReg();
 		emit("	" + actualLen + " = add i32 1, " + length);
@@ -490,11 +490,11 @@ public class TranslatorVisitor implements Visitor {
 		int numMethod=tempVTable.getMethodOffset().size();
 		/* need to check if no methods at all? */
 		lastResult=newReg();
-		emit("	"+lastResult+" = call i8* @calloc(i32 1, i32 "+tempVTable.getVtableSize()+")");
-		emit("	"+newReg()+" = bitcast i8* %_"+(registerCounter-2)+" to i8***");
+		emit("	" + lastResult + " = call i8* @calloc(i32 1, i32 " + tempVTable.getVtableSize() + ")");
+		emit("	" + newReg() + " = bitcast i8* %_" + (registerCounter-2) + " to i8***");
 		
-		emit("	"+newReg()+" = getelementptr ["+numMethod+" x i8*], ["+numMethod+" x i8*]* @."+e.classId()+"_vtable, i32 0, i32 0");
-		emit("	store i8** %_"+(registerCounter-1)+", i8*** %_"+(registerCounter-2));
+		emit("	" + newReg() + " = getelementptr [" + numMethod + " x i8*], [" + numMethod + " x i8*]* @." + e.classId() + "_vtable, i32 0, i32 0");
+		emit("	store i8** %_" + (registerCounter-1) + ", i8*** %_" + (registerCounter-2));
 		
 		
 	}
@@ -503,7 +503,7 @@ public class TranslatorVisitor implements Visitor {
 	public void visit(NotExpr e) {
 		e.e().accept(this);
 		String result = newReg();
-		emit("	"+result + " = xor i1 1, " + lastResult);
+		emit("	" + result + " = xor i1 1, " + lastResult);
 		lastResult = result;
 	}
 
@@ -532,7 +532,7 @@ public class TranslatorVisitor implements Visitor {
 	}
 	
 	public void emit(String s) {
-		emitted.append(s+"\n");
+		emitted.append(s + "\n");
 	}
 	
 	public String newReg() {
