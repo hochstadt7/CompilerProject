@@ -178,7 +178,7 @@ public class TranslatorVisitor implements Visitor {
 		emit("	br i1 "+lastResult+", "+ "label %loop"+(tempWhile+1)+", label %loop"+(tempWhile+2));
 		emit("	loop"+(tempWhile+1)+":");
 		whileStatement.body().accept(this);
-		emit("	br label %loop"+(tempWhile+2));
+		emit("	br label %loop"+(tempWhile));
 		emit("	loop"+(tempWhile+2)+":");
 	}
 
