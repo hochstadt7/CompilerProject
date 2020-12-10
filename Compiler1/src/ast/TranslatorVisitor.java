@@ -218,7 +218,7 @@ public class TranslatorVisitor implements Visitor {
 			last = reg;
 			reg = newReg();
 			emit("	"+reg + " = bitcast i8* " + last + " to " + type + "*");
-			return "%" + reg;
+			return reg;
 		}
 		else
 		{
@@ -397,10 +397,10 @@ public class TranslatorVisitor implements Visitor {
 		caller = lastResult;
 		String ptr = newReg();
 		// need to store here before?? according to examples..
-		emit("	"+ptr + " = load i8*, i8** " + caller);
+		//emit("	"+ptr + " = load i8*, i8** " + caller);
 		String last = ptr;
-		ptr = newReg();
-		emit("	"+ptr + " = bitcast i8* " + last + " to i8***");
+		//ptr = newReg();
+		emit("	"+ptr + " = bitcast i8* " + caller + " to i8***");
 		last = ptr;
 		ptr = newReg();
 		emit("	"+ptr + " = load i8**, i8*** " + last);
@@ -426,9 +426,11 @@ public class TranslatorVisitor implements Visitor {
 		{
 			actuals += ", " + arg_type_list.get(i) + " ";
 			arg.accept(this);
+			/*
 			ptr = newReg();
 			if(!(arg instanceof IntegerLiteralExpr))//no need to store int literal
 				emit("	"+ptr + " = load "+arg_type_list.get(i)+", "+arg_type_list.get(i)+"* " + lastResult);
+				*/
 			actuals += lastResult;
 		}
 		ptr = newReg();
@@ -481,10 +483,11 @@ public class TranslatorVisitor implements Visitor {
 		Vtable tempVTable=ClassTable.get(className.get(e.classId()));
 		int numMethod=tempVTable.getMethodOffset().size();
 		/* need to check if no methods at all? */
-		emit("	"+newReg()+" = call i8* @calloc(i32 1, i32 "+tempVTable.getVtableSize()+")");
-		emit("	"+newReg()+" = bitcast i8* %_"+(registerCounter-2)+" to i8***");
 		lastResult=newReg();
-		emit("	"+lastResult+" = getelementptr ["+numMethod+" x i8*], ["+numMethod+" x i8*]* @."+e.classId()+"_vtable, i32 0, i32 0");
+		emit("	"+lastResult+" = call i8* @calloc(i32 1, i32 "+tempVTable.getVtableSize()+")");
+		emit("	"+newReg()+" = bitcast i8* %_"+(registerCounter-2)+" to i8***");
+		
+		emit("	"+newReg()+" = getelementptr ["+numMethod+" x i8*], ["+numMethod+" x i8*]* @."+e.classId()+"_vtable, i32 0, i32 0");
 		emit("	store i8** %_"+(registerCounter-1)+", i8*** %_"+(registerCounter-2));
 		
 		
