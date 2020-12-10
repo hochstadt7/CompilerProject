@@ -56,7 +56,7 @@ public class TranslatorVisitor implements Visitor {
 			String prefix = "@." + classDecl.name() + "_vtable = global [" + myTable.getMethodOffset().size() + " x i8*] [";
 			StringBuilder sufix = new StringBuilder();
 			Map<Integer, MethodDecl> reverseMap = new HashMap<Integer, MethodDecl>();
-			for (Map.Entry<MethodDecl, Integer> entry : myTable.getMethodOffset().entrySet()) {
+			for (Map.Entry<MethodDecl, Integer> entry : myTable.getMethodOffset().entrySet()) {/*reverse map to get the right order of methods*/
 				reverseMap.put(entry.getValue(), entry.getKey());
 			}
 			for(int i = 0; i<reverseMap.size(); i++) {
@@ -107,13 +107,13 @@ public class TranslatorVisitor implements Visitor {
 	public void visit(MainClass mainClass) {
 		emit("define i32 @main() {");
 		mainClass.mainStatement().accept(this);
-		emit("	ret i32 0"); /* do we need this*/
+		emit("	ret i32 0"); 
 		emit("}\n");
 	}
 
 	@Override
 	public void visit(MethodDecl methodDecl) {
-		this.ifCounter = 0; this.whileCounter = 0; this.registerCounter = 0; /* every method new counters- works? */
+		this.ifCounter = 0; this.whileCounter = 0; this.registerCounter = 0; 
 		String ret_type = "";
 		String formals = "";
 		methodDecl.returnType().accept(this);
@@ -138,7 +138,7 @@ public class TranslatorVisitor implements Visitor {
 			statement.accept(this);
 		}
 		methodDecl.ret().accept(this);
-		emit("ret " + ret_type + " " + lastResult); /* assuming regular functions doesn't return void type */
+		emit("ret " + ret_type + " " + lastResult); 
 		emit("}\n");
 	}
 
@@ -253,11 +253,11 @@ public class TranslatorVisitor implements Visitor {
 	}
 	
 	private void branchCallThrowOob(String ok) {
-		// There is no possibility of nesting here so no temp is needed.
+		
 		emit("	br i1 " + ok + ", label %arr" + (arrayCounter + 1) + ", label %arr" + arrayCounter);
 		emit("	arr" + arrayCounter + ":");
 		emit("	call void @throw_oob()");
-		emit("br label %arr" + (arrayCounter + 1)); // Do we really need this?
+		emit("br label %arr" + (arrayCounter + 1)); 
 		emit("	arr" + (arrayCounter + 1) + ":");
 		arrayCounter += 2;
 	}
@@ -504,7 +504,7 @@ public class TranslatorVisitor implements Visitor {
 	public void visit(NewObjectExpr e) {
 		Vtable tempVTable = ClassTable.get(className.get(e.classId()));
 		int numMethod = tempVTable.getMethodOffset().size();
-		/* need to check if no methods at all? */
+		
 		lastResult = newReg();
 		emit("	" + lastResult + " = call i8* @calloc(i32 1, i32 " + tempVTable.getVtableSize() + ")");
 		emit("	" + newReg() + " = bitcast i8* %_" + (registerCounter-2) + " to i8***");
@@ -570,14 +570,16 @@ public class TranslatorVisitor implements Visitor {
 		Vtable vtable = new Vtable();
 		if(classDecl.superName() != null) {
 			Vtable parentTable = ClassTable.get(className.get(classDecl.superName()));
-			Map<Integer, MethodDecl> reverseMap = new HashMap<Integer, MethodDecl>();
+			Map<Integer, MethodDecl> reverseMap = new HashMap<Integer, MethodDecl>(); /*reverse map to get the right order of methods*/
 			for (Map.Entry<MethodDecl, Integer> entry : parentTable.getMethodOffset().entrySet()) {
 				reverseMap.put(entry.getValue(), entry.getKey());
 			}
-			for(int i=0; i<reverseMap.size(); i++) {
-					vtable.addMethod(reverseMap.get(i));
+			
+			Map<Integer,VarDecl> orderedfiled=parentTable.getFieldOrder();
+			for(int i=0; i<orderedfiled.size(); i++) {
+				vtable.addField(orderedfiled.get(i));
 			}
-			for(VarDecl varDecl:parentTable.getFieldOffset().keySet()) {/*fields can't be "overriden"*/
+			for(VarDecl varDecl:parentTable.getFieldOffset().keySet()) {
 				vtable.addField(varDecl);
 			}
 		}

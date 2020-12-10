@@ -7,12 +7,15 @@ public class Vtable {
 
 	private Map<MethodDecl, Integer> methodOffset;
 	private Map<VarDecl, Integer> fieldOffset;
-	private int VtableSize;
+	private Map<Integer,VarDecl> fieldOrderInsertion;//new field
+	private int VtableSize,order;
 	
 	public Vtable() {
 		methodOffset=new HashMap<MethodDecl,Integer>();
 		fieldOffset=new HashMap<VarDecl,Integer>();
+		fieldOrderInsertion=new HashMap<Integer,VarDecl>();
 		VtableSize=8; /* first 8 bytes for Vtable pointer */
+		order=0;
 	}
 	
 	/* the offset for the pointer of vtable is 0*/
@@ -25,6 +28,8 @@ public class Vtable {
 		int lastOffset=figureOffset(varDecl);
 		fieldOffset.put(varDecl, VtableSize);
 		VtableSize+=lastOffset;
+		fieldOrderInsertion.put(order,varDecl);
+		order++;
 		
 	}
 	
@@ -34,6 +39,10 @@ public class Vtable {
 	
 	public Map<VarDecl, Integer> getFieldOffset(){
 		return this.fieldOffset;
+	}
+	
+	public Map<Integer,VarDecl> getFieldOrder(){
+		return this.fieldOrderInsertion;
 	}
 	
 	public int getVtableSize(){
