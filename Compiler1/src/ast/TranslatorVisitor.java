@@ -431,6 +431,7 @@ public class TranslatorVisitor implements Visitor {
 				emit("	"+ptr + " = load "+arg_type_list.get(i)+", "+arg_type_list.get(i)+"* " + lastResult);
 				*/
 			actuals += lastResult;
+			i++;
 		}
 		last = ptr;
 		ptr = newReg();
