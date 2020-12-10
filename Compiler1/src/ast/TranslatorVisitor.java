@@ -241,7 +241,7 @@ public class TranslatorVisitor implements Visitor {
 		emit("	br i1 " + ok + ", label %arr" + (arrayCounter + 1) + ", label %arr" + arrayCounter);
 		emit("	arr" + arrayCounter + ":");
 		emit("	call void @throw_oob()");
-		//emit("br label %arr" + (arrayCounter + 1)); // Do we really need this?
+		emit("br label %arr" + (arrayCounter + 1)); // Do we really need this?
 		emit("	arr" + (arrayCounter + 1) + ":");
 		arrayCounter += 2;
 	}
