@@ -419,8 +419,6 @@ public class TranslatorVisitor implements Visitor {
 		else
 			emit("	"+ptr + " = bitcast i8* " + last + " to " + return_val + " (i8*)*");
 			
-		last = ptr;
-		ptr = newReg();
 		actuals += "i8* " + caller;
 		//store actuals and build actual string
 		for(Expr arg : e.actuals())
@@ -434,6 +432,7 @@ public class TranslatorVisitor implements Visitor {
 				*/
 			actuals += lastResult;
 		}
+		last = ptr;
 		ptr = newReg();
 		emit("	"+ptr + " = call "+return_val+" " + func_reg +"("+actuals+")");
 		lastResult = ptr;
