@@ -13,7 +13,6 @@ public class TranslatorVisitor implements Visitor {
 	ClassDecl currentClass;
 	Map<ClassDecl, Vtable> ClassTable; /*classes and their Vtable*/
 	Map<String,ClassDecl> className;
-	Map<MethodDecl,ClassDecl> ownerOfMethod;
 	private HashMap<AstNode,SymbolTable> sTable; /* variable symbol table */
 	
 	public TranslatorVisitor(HashMap<AstNode,SymbolTable> _sTable) {
@@ -26,7 +25,7 @@ public class TranslatorVisitor implements Visitor {
 		this.lastResult = "";
 		ClassTable = new HashMap<ClassDecl, Vtable>(); 
 		className = new HashMap<String,ClassDecl>();
-		ownerOfMethod=new HashMap<MethodDecl,ClassDecl>();
+		
 		sTable = _sTable;
 	}
 
@@ -574,6 +573,9 @@ public class TranslatorVisitor implements Visitor {
 			for (Map.Entry<MethodDecl, Integer> entry : parentTable.getMethodOffset().entrySet()) {
 				reverseMap.put(entry.getValue(), entry.getKey());
 			}
+			for(int i=0; i<reverseMap.size(); i++) {
+				vtable.addMethod(reverseMap.get(i));
+			}
 			
 			Map<Integer,VarDecl> orderedfiled=parentTable.getFieldOrder();
 			for(int i=0; i<orderedfiled.size(); i++) {
@@ -588,7 +590,7 @@ public class TranslatorVisitor implements Visitor {
 		
 		
 		for(MethodDecl methodDecl:classDecl.methoddecls()) {
-			ownerOfMethod.put(methodDecl, classDecl);
+			
 			if(!(hasMethodName(methodDecl.name(),vtable.getMethodOffset()))) {
 					vtable.addMethod(methodDecl);
 			}
