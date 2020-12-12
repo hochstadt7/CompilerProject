@@ -150,7 +150,7 @@ public class TranslatorVisitor implements Visitor {
 	@Override
 	public void visit(VarDecl varDecl) {
 		varDecl.type().accept(this);
-		boolean isField = sTable.get(varDecl).lookup(varDecl.name()).getIsField();
+		boolean isField = sTable.get(varDecl).lookupVars(varDecl.name()).isField();
 		if(!isField)
 		{
 			emit("	%" + varDecl.name() + " = alloca " + lastResult);
@@ -219,7 +219,7 @@ public class TranslatorVisitor implements Visitor {
 	
 	private String getVariablePtr(String name, String type, SymbolTable table) {
 		Vtable tempVTable = ClassTable.get(currentClass);
-		boolean isField = table.lookup(name).getIsField();
+		boolean isField = table.lookupVars(name).isField();
 		String reg, last;
 		int fieldLocation = 0;
 		if(isField) // If lv is a field, we have to load/store it differently.
@@ -244,7 +244,7 @@ public class TranslatorVisitor implements Visitor {
 
 	@Override
 	public void visit(AssignStatement assignStatement) {
-		String type = sTable.get(assignStatement).lookup(assignStatement.lv()).getType();
+		String type = sTable.get(assignStatement).lookupVars(assignStatement.lv()).getType();
 		type = translateType(type);
 		String ptr = getVariablePtr(assignStatement.lv(), type, sTable.get(assignStatement));
 		assignStatement.rv().accept(this);
@@ -382,11 +382,11 @@ public class TranslatorVisitor implements Visitor {
 		String actuals = "";
 		//get the class ID of the caller
 		if(e.ownerExpr() instanceof ThisExpr)
-			type = sTable.get(e.ownerExpr()).lookup("this").getType();
+			type = sTable.get(e.ownerExpr()).lookupVars("this").getType();
 		else if(e.ownerExpr() instanceof NewObjectExpr)
 			type = ((NewObjectExpr) e.ownerExpr()).classId();
 		else if(e.ownerExpr() instanceof IdentifierExpr)
-			type = sTable.get(e.ownerExpr()).lookup(((IdentifierExpr) e.ownerExpr()).id()).getType();
+			type = sTable.get(e.ownerExpr()).lookupVars(((IdentifierExpr) e.ownerExpr()).id()).getType();
 		//get Vtable of class
 		tempVTable = ClassTable.get(className.get(type));
 		//using the Vtable to get the actual types
@@ -472,7 +472,7 @@ public class TranslatorVisitor implements Visitor {
 
 	@Override
 	public void visit(IdentifierExpr e) {
-		String type = sTable.get(e).lookup(e.id()).getType();
+		String type = sTable.get(e).lookupVars(e.id()).getType();
 		type = translateType(type);
 		lastResult = getVariable(type, e.id(), sTable.get(e));
 	}

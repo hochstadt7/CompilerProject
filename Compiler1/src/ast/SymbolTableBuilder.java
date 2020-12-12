@@ -103,7 +103,7 @@ public class SymbolTableBuilder implements Visitor {
 		currMeth.setParentSymbolTable(this.ParentSymbolTableMeth);
 		
 		myVariables.put(mainClass,this.currentSymbolTableVar );
-		this.currentSymbolTableVar.addEntery(mainClass.argsName(), new SymbolDetails("String-array"));
+		this.currentSymbolTableVar.addEntery(mainClass.argsName(), new SymbolVars("String-array", isField));
 		
 		if(mainClass.mainStatement()!=null) {
 			mainClass.mainStatement().accept(this);
@@ -123,7 +123,7 @@ public class SymbolTableBuilder implements Visitor {
 		}
 		methodDecl.returnType().accept(this);
 		myMethods.put(methodDecl,this.currentSymbolTableMeth);
-		this.currentSymbolTableMeth.addEntery(methodDecl.name(), new SymbolDetails(this.refType,parameters));
+		this.currentSymbolTableMeth.addEntery(methodDecl.name(), new SymbolMethods(this.refType,parameters));
 		}
 		
 		SymbolTable tempVar=this.currentSymbolTableVar;
@@ -165,7 +165,7 @@ public class SymbolTableBuilder implements Visitor {
 		if(formalArg.type()!=null) {
 		formalArg.type().accept(this);
 		myVariables.put(formalArg, this.currentSymbolTableVar);
-		this.currentSymbolTableVar.addEntery(formalArg.name(), new SymbolDetails(this.refType));
+		this.currentSymbolTableVar.addEntery(formalArg.name(), new SymbolVars(this.refType, isField));
 		}
 	}
 
@@ -175,7 +175,7 @@ public class SymbolTableBuilder implements Visitor {
 		if(varDecl.type()!=null) {
 		varDecl.type().accept(this);
 		myVariables.put(varDecl, this.currentSymbolTableVar);
-		this.currentSymbolTableVar.addEntery(varDecl.name(), new SymbolDetails(this.refType,this.isField));
+		this.currentSymbolTableVar.addEntery(varDecl.name(), new SymbolVars(this.refType,this.isField));
 		}
 	}
 
@@ -343,7 +343,7 @@ public class SymbolTableBuilder implements Visitor {
 	@Override
 	public void visit(ThisExpr e) {
 		myVariables.put(e, currentSymbolTableVar);
-		this.currentSymbolTableVar.addEntery("this", new SymbolDetails(this.classType));
+		this.currentSymbolTableVar.addEntery("this", new SymbolVars(this.classType, isField));
 	}
 
 	@Override

@@ -153,11 +153,11 @@ public class MethodInstanceRenamer implements Visitor {
 		if(origMethodName.equals(e.methodId()))//Rename Instance
 		{
 			if(e.ownerExpr() instanceof ThisExpr)
-				type = sTable.get(e.ownerExpr()).lookup("this").getType();
+				type = sTable.get(e.ownerExpr()).lookupVars("this").getType();
 			else if(e.ownerExpr() instanceof NewObjectExpr)
 				type = ((NewObjectExpr) e.ownerExpr()).classId();
 			else if(e.ownerExpr() instanceof IdentifierExpr)
-				type = sTable.get(e.ownerExpr()).lookup(((IdentifierExpr) e.ownerExpr()).id()).getType();	
+				type = sTable.get(e.ownerExpr()).lookupVars(((IdentifierExpr) e.ownerExpr()).id()).getType();	
 			if(OffspringNames.contains(type))
 				e.setMethodId(this.newMethodName);
 		}

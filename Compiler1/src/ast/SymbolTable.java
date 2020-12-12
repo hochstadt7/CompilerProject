@@ -39,16 +39,27 @@ public class SymbolTable {
 		  this.parent = parentSymbolTable;
 	  }
 	
-	public SymbolDetails lookup(String name) {
-		SymbolDetails res = entries.get(name);
+	public SymbolVars lookupVars(String name) {
+		SymbolVars res = (SymbolVars) entries.get(name);
 		if (res != null) {
 			return res;
 		}
 		if (parent == null) {
 			return null;
 		}
-		return parent.lookup(name);
+		return parent.lookupVars(name);
 	}
+	public SymbolMethods lookupMethods(String name) {
+		SymbolMethods res = (SymbolMethods) entries.get(name);
+		if (res != null) {
+			return res;
+		}
+		if (parent == null) {
+			return null;
+		}
+		return parent.lookupMethods(name);
+	}
+	
 @Override
 public String toString() {
 		
