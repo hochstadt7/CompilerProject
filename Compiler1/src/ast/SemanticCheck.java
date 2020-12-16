@@ -65,12 +65,22 @@ public class SemanticCheck implements Visitor {
 
 	@Override
 	public void visit(MethodDecl methodDecl) {
-		// TODO Auto-generated method stub
+		
+		Map<String,VarDecl> localName= new HashMap<String,VarDecl>();
+		for(VarDecl varDecl: methodDecl.vardecls()) {
+			String myName=varDecl.name();
+			if(localName.containsKey(myName)) // redeclaration in current method
+				isOk=false;
+			// possible that same name of local var will appear as field of class
+			localName.put(myName, varDecl);
+		}
 		
 	}
 
 	@Override
 	public void visit(FormalArg formalArg) {
+		
+		//before or after, Tom will check redeclaration
 		formalArg.type().accept(this);
 		if((formalArg.type() instanceof RefType) && className.get(refType)==null) // no definition
 			isOk= false;
@@ -105,7 +115,7 @@ public class SemanticCheck implements Visitor {
 
 	@Override
 	public void visit(SysoutStatement sysoutStatement) {
-		// TODO Auto-generated method stub
+		
 		
 	}
 

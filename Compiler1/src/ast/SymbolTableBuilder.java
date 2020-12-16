@@ -95,13 +95,10 @@ public class SymbolTableBuilder implements Visitor {
 	public void visit(MainClass mainClass) {
 		this.classType=mainClass.name();
 		SymbolTable currVar=new SymbolTable();
-		SymbolTable currMeth=new SymbolTable();
 		
 		this.currentSymbolTableVar=currVar;
 		currVar.setParentSymbolTable(this.ParentSymbolTableVar);
-		this.currentSymbolTableMeth=currMeth;
-		currMeth.setParentSymbolTable(this.ParentSymbolTableMeth);
-		
+
 		myVariables.put(mainClass,this.currentSymbolTableVar );
 		this.currentSymbolTableVar.addEntery(mainClass.argsName(), new SymbolVars("String-array", isField));
 		
@@ -114,8 +111,6 @@ public class SymbolTableBuilder implements Visitor {
 	@Override
 	public void visit(MethodDecl methodDecl) {
 		
-		
-		if(methodDecl.returnType()!=null) {
 		List<String> parameters=new ArrayList<String>();
 		for(FormalArg formalArg:methodDecl.formals()) {
 			formalArg.type().accept(this);
@@ -124,19 +119,14 @@ public class SymbolTableBuilder implements Visitor {
 		methodDecl.returnType().accept(this);
 		myMethods.put(methodDecl,this.currentSymbolTableMeth);
 		this.currentSymbolTableMeth.addEntery(methodDecl.name(), new SymbolMethods(this.refType,parameters));
-		}
+		
 		
 		SymbolTable tempVar=this.currentSymbolTableVar;
-		SymbolTable tempMeth=this.currentSymbolTableMeth;
 		SymbolTable currVar=new SymbolTable();
-		SymbolTable currMeth=new SymbolTable();
 		
 		this.ParentSymbolTableVar=this.currentSymbolTableVar;
 		this.currentSymbolTableVar=currVar;
 		currVar.setParentSymbolTable(this.ParentSymbolTableVar);
-		this.ParentSymbolTableMeth=this.currentSymbolTableMeth;
-		this.currentSymbolTableMeth=currMeth;
-		currMeth.setParentSymbolTable(this.ParentSymbolTableMeth);
 		
 		for (VarDecl vDecl: methodDecl.vardecls()) {
 			vDecl.accept(this);
@@ -148,35 +138,28 @@ public class SymbolTableBuilder implements Visitor {
 			statement.accept(this);
 		}
 		
-		if(methodDecl.ret()!=null) {
-			methodDecl.ret().accept(this);
-		}
+		methodDecl.ret().accept(this);
 		/* retrieve pointers for upper scope */
 		this.currentSymbolTableVar=tempVar;
 		this.ParentSymbolTableVar=tempVar.getParentSymbolTable();
-		this.currentSymbolTableMeth=tempMeth;
-		this.ParentSymbolTableMeth=tempMeth.getParentSymbolTable();
 		
 	}
 
 	@Override
 	public void visit(FormalArg formalArg) {
 		
-		if(formalArg.type()!=null) {
 		formalArg.type().accept(this);
 		myVariables.put(formalArg, this.currentSymbolTableVar);
 		this.currentSymbolTableVar.addEntery(formalArg.name(), new SymbolVars(this.refType, isField));
-		}
+		
 	}
 
 	@Override
 	public void visit(VarDecl varDecl) {
 		
-		if(varDecl.type()!=null) {
 		varDecl.type().accept(this);
 		myVariables.put(varDecl, this.currentSymbolTableVar);
 		this.currentSymbolTableVar.addEntery(varDecl.name(), new SymbolVars(this.refType,this.isField));
-		}
 	}
 
 	@Override
@@ -189,124 +172,101 @@ public class SymbolTableBuilder implements Visitor {
 	@Override
 	public void visit(IfStatement ifStatement) {
 		
-		if(ifStatement.cond()!=null)
-			ifStatement.cond().accept(this);
-		if(ifStatement.thencase()!=null)
-			ifStatement.thencase().accept(this);
-		if(ifStatement.elsecase()!=null)
-			ifStatement.elsecase().accept(this);
+		ifStatement.cond().accept(this);
+		ifStatement.thencase().accept(this);
+		ifStatement.elsecase().accept(this);
 		
 	}
 
 	@Override
 	public void visit(WhileStatement whileStatement) {
 		
-		if(whileStatement.cond()!=null)
-			whileStatement.cond().accept(this);
-		if(whileStatement.body()!=null)
-			whileStatement.body().accept(this);
+		whileStatement.cond().accept(this);
+		whileStatement.body().accept(this);
 		
 	}
 
 	@Override
 	public void visit(SysoutStatement sysoutStatement) {
-		if(sysoutStatement.arg()!=null) {
-		sysoutStatement.arg().accept(this);
-		}
 		
+		sysoutStatement.arg().accept(this);
 	}
 
 	@Override
 	public void visit(AssignStatement assignStatement) {
 		
-		if(assignStatement.rv()!=null) {
 		assignStatement.rv().accept(this);
 		myVariables.put(assignStatement,this.currentSymbolTableVar);
-		}
+		
 	}
 
 	@Override
 	public void visit(AssignArrayStatement assignArrayStatement) {
 		
 		myVariables.put(assignArrayStatement,this.currentSymbolTableVar);
-		if(assignArrayStatement.rv()!=null) {
+
 		assignArrayStatement.rv().accept(this);
-		}
-		if(assignArrayStatement.index()!=null) {
-			assignArrayStatement.index().accept(this);
-		}
+		assignArrayStatement.index().accept(this);
 	}
 
 	@Override
 	public void visit(AndExpr e) {
 		
-		if(e.e1()!=null)
-			e.e1().accept(this);
-		if(e.e2()!=null)
-			e.e2().accept(this);
+		e.e1().accept(this);
+		e.e2().accept(this);
 		
 	}
 
 	@Override
 	public void visit(LtExpr e) {
-		if(e.e1()!=null)
-			e.e1().accept(this);
-		if(e.e2()!=null)
-			e.e2().accept(this);
+		
+		e.e1().accept(this);
+		e.e2().accept(this);
 		
 	}
 
 	@Override
 	public void visit(AddExpr e) {
 
-	if(e.e1()!=null)
-		e.e1().accept(this);
-	if(e.e2()!=null)
-		e.e2().accept(this);
-		
-	}
+
+	e.e1().accept(this);
+	e.e2().accept(this);
+	}	
+	
 
 	@Override
 	public void visit(SubtractExpr e) {
 
-		if(e.e1()!=null)
-			e.e1().accept(this);
-		if(e.e2()!=null)
-			e.e2().accept(this);
+		e.e1().accept(this);
+		e.e2().accept(this);
 		
 	}
 
 	@Override
 	public void visit(MultExpr e) {
 
-		if(e.e1()!=null)
-			e.e1().accept(this);
-		if(e.e2()!=null)
-			e.e2().accept(this);
+		e.e1().accept(this);
+		e.e2().accept(this);
 		
 	}
 
 	@Override
 	public void visit(ArrayAccessExpr e) {
 
-		if(e.arrayExpr()!=null)
-			e.arrayExpr().accept(this);
-		if(e.indexExpr()!=null)
-			e.indexExpr().accept(this);
+		e.arrayExpr().accept(this);
+		e.indexExpr().accept(this);
 	}
 
 	@Override
 	public void visit(ArrayLengthExpr e) {
 		
-		if(e.arrayExpr()!=null)
-			e.arrayExpr().accept(this);	
+		e.arrayExpr().accept(this);	
 	}
 
 	@Override
 	public void visit(MethodCallExpr e) {
 
-	if(e.ownerExpr()!=null)
-		e.ownerExpr().accept(this);
+	e.ownerExpr().accept(this);
 	myMethods.put(e, this.currentSymbolTableMeth);
 	
 	for(Expr expr: e.actuals()) {
@@ -349,8 +309,7 @@ public class SymbolTableBuilder implements Visitor {
 	@Override
 	public void visit(NewIntArrayExpr e) {
 		
-		if(e.lengthExpr()!=null)
-			e.lengthExpr().accept(this);
+		e.lengthExpr().accept(this);
 	}
 
 	@Override
@@ -360,8 +319,8 @@ public class SymbolTableBuilder implements Visitor {
 
 	@Override
 	public void visit(NotExpr e) {
-		if(e.e()!=null)
-			e.e().accept(this);
+		
+		e.e().accept(this);
 	}
 
 	@Override
