@@ -1,6 +1,8 @@
 package ast;
 
 import java.util.HashMap;
+import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
 
 public class SemanticCheck implements Visitor {
@@ -30,9 +32,10 @@ public class SemanticCheck implements Visitor {
 			if(className.containsKey(myName)||(parentName!=null && !(className.containsKey(parentName)))||parentName.equals(mainName))
 				isOk= false;
 			className.put(myName, classDecl);
-				
 		}
-		
+		for(ClassDecl classDecl:program.classDecls()) {
+			classDecl.accept(this);
+		}
 	}
 
 	@Override
@@ -65,14 +68,33 @@ public class SemanticCheck implements Visitor {
 
 	@Override
 	public void visit(MethodDecl methodDecl) {
-		
 		Map<String,VarDecl> localName= new HashMap<String,VarDecl>();
+		SymbolMethods ancestorMethod= methTable.get(methodDecl).lookupMethodOverride(methodDecl.name());
 		for(VarDecl varDecl: methodDecl.vardecls()) {
 			String myName=varDecl.name();
 			if(localName.containsKey(myName)) // redeclaration in current method
 				isOk=false;
 			// possible that same name of local var will appear as field of class
 			localName.put(myName, varDecl);
+		}
+		//checking for correct override (#6)
+		if (ancestorMethod != null)
+		{
+			methodDecl.returnType().accept(this);
+			if(!refType.equals(ancestorMethod.getType())) // same return type
+				isOk=false;
+			if(methodDecl.vardecls().size() == ancestorMethod.getParameters().size()) // same number of args
+			{
+				//arg type check
+				ListIterator<String> iter = ancestorMethod.getParameters().listIterator();
+				for(VarDecl varDecl: methodDecl.vardecls()) {
+					varDecl.type().accept(this);
+					if(!refType.equals(iter.next()))
+						isOk=false;
+				}
+			}
+			else
+				isOk=false;
 		}
 		
 	}
@@ -103,13 +125,22 @@ public class SemanticCheck implements Visitor {
 
 	@Override
 	public void visit(IfStatement ifStatement) {
-		// TODO Auto-generated method stub
+		//checking if condition is boolean (#17)
+		ifStatement.cond().accept(this);
+		if(refType.equals("boolean"))
+			isOk = false;
+		ifStatement.thencase().accept(this);
+		ifStatement.elsecase().accept(this);
 		
 	}
 
 	@Override
 	public void visit(WhileStatement whileStatement) {
-		// TODO Auto-generated method stub
+		//checking while condition is boolean (#17)
+		whileStatement.cond().accept(this);
+		if(refType.equals("boolean"))
+			isOk = false;
+		whileStatement.body().accept(this);
 		
 	}
 
@@ -169,31 +200,74 @@ public class SemanticCheck implements Visitor {
 
 	@Override
 	public void visit(ArrayLengthExpr e) {
-		// TODO Auto-generated method stub
+		//checking caller of length is array (#13)
+		e.accept(this);
+		if(!refType.equals("int-array"))
+			isOk = false;
 		
 	}
 
 	@Override
 	public void visit(MethodCallExpr e) {
-		
-		
+		String type ="";
+		ClassDecl ownerClass;
+		boolean inClass = false;
+		List<String> parameters;
+		ListIterator<String> iter;
+		e.ownerExpr().accept(this);
+		type = refType;
+		//checking the caller is of new, this, or identifier (#12) 
+		if(!(e.ownerExpr() instanceof NewObjectExpr || e.ownerExpr() instanceof ThisExpr || e.ownerExpr() instanceof IdentifierExpr))
+			isOk = false;
+		//checking the type of the caller is valid (#10)
+		if(type.equals("int") || type.equals("boolean") || type.equals("int-array"))
+		{
+			isOk = false;
+		}
+		ownerClass = className.get(type);
+		//checking for correct method call (#11)
+		if(ownerClass != null)
+			for (MethodDecl methdecl: ownerClass.methoddecls())
+			{
+				if(methdecl.name().equals(e.methodId()))//a method with such name exists in the class
+				{
+					inClass = true;
+					parameters = methTable.get(methdecl).lookupMethods(methdecl.name()).getParameters();
+					iter = parameters.listIterator();
+					if(e.actuals().size() == parameters.size())
+					{
+						for(Expr expr: e.actuals())//checking arg types
+						{
+							expr.accept(this);
+							if(refType.equals(iter.next()))
+								isOk = false;
+						}
+					}
+					else
+						isOk = false;
+				}
+			}
+	else
+		isOk = false;
+	isOk = isOk && inClass;
 	}
+	
 
 	@Override
 	public void visit(IntegerLiteralExpr e) {
-		
+		refType = "int";
 		
 	}
 
 	@Override
 	public void visit(TrueExpr e) {
-		// TODO Auto-generated method stub
+		refType = "boolean";
 		
 	}
 
 	@Override
 	public void visit(FalseExpr e) {
-		// TODO Auto-generated method stub
+		refType = "boolean";
 		
 	}
 
@@ -202,11 +276,13 @@ public class SemanticCheck implements Visitor {
 		SymbolTable myTable=this.VarTable.get(e);
 		if(myTable.lookupVars(e.id())==null) // no definition
 			isOk=false;
+		else
+			refType = myTable.lookupVars(e.id()).getType();
 	}
 
 	@Override
 	public void visit(ThisExpr e) {
-		// TODO Auto-generated method stub
+		this.refType= VarTable.get(e).lookupVars("this").getType();
 		
 	}
 
@@ -226,7 +302,7 @@ public class SemanticCheck implements Visitor {
 
 	@Override
 	public void visit(NotExpr e) {
-		// TODO Auto-generated method stub
+		refType = "boolean";
 		
 	}
 
