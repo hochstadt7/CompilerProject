@@ -59,6 +59,12 @@ public class SymbolTable {
 		}
 		return parent.lookupMethods(name);
 	}
+	public SymbolMethods lookupMethodOverride(String name) {
+		if (parent == null) {
+			return null;
+		}
+		return parent.lookupMethods(name);
+	}
 	
 @Override
 public String toString() {
