@@ -127,8 +127,7 @@ public class SemanticCheck implements Visitor {
 	public void visit(IfStatement ifStatement) {
 		//checking if condition is boolean (#17)
 		ifStatement.cond().accept(this);
-		if(refType.equals("boolean"))
-			isOk = false;
+		checkType("boolean");
 		ifStatement.thencase().accept(this);
 		ifStatement.elsecase().accept(this);
 		
@@ -138,16 +137,16 @@ public class SemanticCheck implements Visitor {
 	public void visit(WhileStatement whileStatement) {
 		//checking while condition is boolean (#17)
 		whileStatement.cond().accept(this);
-		if(refType.equals("boolean"))
-			isOk = false;
+		checkType("boolean");
 		whileStatement.body().accept(this);
 		
 	}
 
 	@Override
 	public void visit(SysoutStatement sysoutStatement) {
-		
-		
+		//print arg is int (#20)
+		sysoutStatement.arg().accept(this);
+		checkType("int");
 	}
 
 	@Override
@@ -158,53 +157,75 @@ public class SemanticCheck implements Visitor {
 
 	@Override
 	public void visit(AssignArrayStatement assignArrayStatement) {
-		// TODO Auto-generated method stub
+		//(#23)
+		refType = VarTable.get(assignArrayStatement).lookupVars(assignArrayStatement.lv()).getType();
+		checkType("int-array");
+		assignArrayStatement.index().accept(this);
+		checkType("int");
+		assignArrayStatement.rv().accept(this);
+		checkType("int");
 		
 	}
-
+	private void binaryOperator(BinaryExpr e, String inputType, String outputType)
+	{
+		String firstType;
+		e.e1().accept(this);
+		firstType = refType;
+		e.e2().accept(this);
+		if(!refType.equals(inputType) || !firstType.equals(inputType))
+			isOk = false;
+		refType = outputType;
+	}
+	
+	private void checkType(String type)
+	{
+		if(!refType.equals(type))
+			isOk = false;
+	}
 	@Override
 	public void visit(AndExpr e) {
-		// TODO Auto-generated method stub
-		
+		//(#21)
+		binaryOperator(e, "boolean", "boolean");
 	}
 
 	@Override
 	public void visit(LtExpr e) {
-		// TODO Auto-generated method stub
-		
+		//(#21)
+		binaryOperator(e, "int", "boolean");
 	}
 
 	@Override
 	public void visit(AddExpr e) {
-		// TODO Auto-generated method stub
-		
+		//(#21)
+		binaryOperator(e, "int", "int");
 	}
 
 	@Override
 	public void visit(SubtractExpr e) {
-		// TODO Auto-generated method stub
-		
+		//(#21)
+		binaryOperator(e, "int", "int");
 	}
 
 	@Override
 	public void visit(MultExpr e) {
-		// TODO Auto-generated method stub
-		
+		//(#21)
+		binaryOperator(e, "int", "int");
 	}
 
 	@Override
 	public void visit(ArrayAccessExpr e) {
-		// TODO Auto-generated method stub
-		
+		//(#22)
+		e.arrayExpr().accept(this);
+		checkType("int-array");
+		e.indexExpr().accept(this);
+		checkType("int");
 	}
 
 	@Override
 	public void visit(ArrayLengthExpr e) {
 		//checking caller of length is array (#13)
 		e.accept(this);
-		if(!refType.equals("int-array"))
-			isOk = false;
-		
+		checkType("int-array");
 	}
 
 	@Override
@@ -299,9 +320,11 @@ public class SemanticCheck implements Visitor {
 				isOk=false;
 		
 	}
-
 	@Override
 	public void visit(NotExpr e) {
+		//(#21)
+		e.e().accept(this);
+		checkType("boolean");
 		refType = "boolean";
 		
 	}
