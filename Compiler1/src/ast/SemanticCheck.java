@@ -73,7 +73,16 @@ public class SemanticCheck implements Visitor {
 	public void visit(MethodDecl methodDecl) {
 		Map<String,VarDecl> localName= new HashMap<String,VarDecl>();
 		SymbolMethods ancestorMethod= methTable.get(methodDecl).lookupMethodOverride(methodDecl.name());
+		Set<String> formal_names = new HashSet<String>(); 
 		uninit = new HashSet<String>();
+		String retType;
+		//(#24 formal check)
+		for(FormalArg formal:methodDecl.formals())
+		{
+			if(formal_names.contains(formal.name()))
+				isOk = false;
+			formal_names.add(formal.name());
+		}
 		for(VarDecl varDecl: methodDecl.vardecls()) {
 			String myName=varDecl.name();
 			if(localName.containsKey(myName)) // redeclaration in current method
@@ -103,6 +112,19 @@ public class SemanticCheck implements Visitor {
 		}
 		for (Statement statement : methodDecl.body()) {
 			statement.accept(this);
+		}
+		//(#18)
+		methodDecl.returnType().accept(this);
+		retType = refType;
+		methodDecl.ret().accept(this);
+		if(!retType.equals(refType))
+		{
+			//if the returned value is not an object, there is no need to perform a lookup
+			if(refType.equals("int") || refType.equals("boolean") || refType.equals("int-array"))
+				isOk = false;
+			else 
+				if(!VarTable.get(className.get(refType)).IsDaughterClass(retType))
+					isOk = false;
 		}
 	}
 
@@ -328,7 +350,10 @@ public class SemanticCheck implements Visitor {
 
 	@Override
 	public void visit(NewIntArrayExpr e) {
-		// TODO Auto-generated method stub
+		//(#25)
+		e.lengthExpr().accept(this);
+		checkType("int");
+		refType="int-array";
 		
 	}
 
