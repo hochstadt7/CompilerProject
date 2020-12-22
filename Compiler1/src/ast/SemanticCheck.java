@@ -4,6 +4,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
+import java.util.HashSet;
+import java.util.Set;
 
 public class SemanticCheck implements Visitor {
 
@@ -12,6 +14,7 @@ public class SemanticCheck implements Visitor {
 	Map<String,ClassDecl> className;
 	private String refType;
 	private boolean isOk;
+	private Set<String> uninit;
 	
 	public SemanticCheck(SymbolTableBuilder symbolTableBuilder) {
 		
@@ -70,12 +73,14 @@ public class SemanticCheck implements Visitor {
 	public void visit(MethodDecl methodDecl) {
 		Map<String,VarDecl> localName= new HashMap<String,VarDecl>();
 		SymbolMethods ancestorMethod= methTable.get(methodDecl).lookupMethodOverride(methodDecl.name());
+		uninit = new HashSet<String>();
 		for(VarDecl varDecl: methodDecl.vardecls()) {
 			String myName=varDecl.name();
 			if(localName.containsKey(myName)) // redeclaration in current method
 				isOk=false;
 			// possible that same name of local var will appear as field of class
 			localName.put(myName, varDecl);
+			uninit.add(myName);
 		}
 		//checking for correct override (#6)
 		if (ancestorMethod != null)
@@ -96,7 +101,9 @@ public class SemanticCheck implements Visitor {
 			else
 				isOk=false;
 		}
-		
+		for (Statement statement : methodDecl.body()) {
+			statement.accept(this);
+		}
 	}
 
 	@Override
@@ -119,8 +126,9 @@ public class SemanticCheck implements Visitor {
 
 	@Override
 	public void visit(BlockStatement blockStatement) {
-		// TODO Auto-generated method stub
-		
+		for (Statement s : blockStatement.statements()) {
+			s.accept(this);
+		}
 	}
 
 	@Override
@@ -128,9 +136,12 @@ public class SemanticCheck implements Visitor {
 		//checking if condition is boolean (#17)
 		ifStatement.cond().accept(this);
 		checkType("boolean");
+		Set<String> elseClone = new HashSet<String>(uninit);
 		ifStatement.thencase().accept(this);
+		Set<String> thenClone = new HashSet<String>(uninit);
+		uninit = elseClone;
 		ifStatement.elsecase().accept(this);
-		
+		uninit.addAll(thenClone);
 	}
 
 	@Override
@@ -138,8 +149,9 @@ public class SemanticCheck implements Visitor {
 		//checking while condition is boolean (#17)
 		whileStatement.cond().accept(this);
 		checkType("boolean");
+		Set<String> clone = new HashSet<String>(uninit);
 		whileStatement.body().accept(this);
-		
+		uninit = clone;
 	}
 
 	@Override
@@ -151,12 +163,16 @@ public class SemanticCheck implements Visitor {
 
 	@Override
 	public void visit(AssignStatement assignStatement) {
-		// TODO Auto-generated method stub
-		
+		// We probably need to do more than that.
+		uninit.remove(assignStatement.lv());
 	}
 
 	@Override
 	public void visit(AssignArrayStatement assignArrayStatement) {
+		//(#15)
+		if (uninit.contains(assignArrayStatement.lv())) {
+			isOk = false;
+		}
 		//(#23)
 		refType = VarTable.get(assignArrayStatement).lookupVars(assignArrayStatement.lv()).getType();
 		checkType("int-array");
@@ -164,7 +180,6 @@ public class SemanticCheck implements Visitor {
 		checkType("int");
 		assignArrayStatement.rv().accept(this);
 		checkType("int");
-		
 	}
 	private void binaryOperator(BinaryExpr e, String inputType, String outputType)
 	{
@@ -299,6 +314,10 @@ public class SemanticCheck implements Visitor {
 			isOk=false;
 		else
 			refType = myTable.lookupVars(e.id()).getType();
+		//(#15)
+		if (uninit.contains(e.id())) {
+			isOk = false;
+		}
 	}
 
 	@Override
