@@ -29,6 +29,7 @@ public class SemanticCheck implements Visitor {
 	public void visit(Program program) {
 
 		String mainName=program.mainClass().name();
+		
 		for(ClassDecl classDecl:program.classDecls()) {
 			String myName=classDecl.name();
 			String parentName=classDecl.superName();
@@ -39,6 +40,7 @@ public class SemanticCheck implements Visitor {
 		for(ClassDecl classDecl:program.classDecls()) {
 			classDecl.accept(this);
 		}
+		program.mainClass().accept(this);
 	}
 
 	@Override
@@ -49,7 +51,7 @@ public class SemanticCheck implements Visitor {
 			String myName=varDecl.name();
 			if(fieldName.containsKey(myName)) // redeclaration in current class
 				isOk=false;
-			if(parent!=null && parent.lookupVars(myName)!=null) // check redeclaration in upper classes
+			if(parent!=null && parent.lookupVars(myName)!=null) // redeclaration in upper classes (possible in java, not in minijava)
 				isOk=false;
 			fieldName.put(myName, varDecl);
 		}
@@ -60,12 +62,17 @@ public class SemanticCheck implements Visitor {
 				isOk=false;
 			methodName.put(myName, methodDecl);
 		}
+		for (VarDecl varDecl: classDecl.fields())
+			varDecl.accept(this);
+		for(MethodDecl methodDecl: classDecl.methoddecls())
+			methodDecl.accept(this);
+		
 	}
 		
 
 	@Override
 	public void visit(MainClass mainClass) {
-		mainClass.mainStatement().accept(this);
+		mainClass.mainStatement().accept(this); // nothing else
 		
 	}
 
@@ -113,9 +120,6 @@ public class SemanticCheck implements Visitor {
 			else
 				isOk=false;
 		}
-		for (Statement statement : methodDecl.body()) {
-			statement.accept(this);
-		}
 		//(#18)
 		methodDecl.returnType().accept(this);
 		returnType = refType;
@@ -123,6 +127,12 @@ public class SemanticCheck implements Visitor {
 		
 		if(!IsDaughterClass(this.refType,returnType))
 			isOk = false;
+		for (Statement statement : methodDecl.body()) {
+			statement.accept(this);
+		}
+		for (VarDecl varDecl: methodDecl.vardecls()) {
+			varDecl.accept(this);
+		}
 		
 			
 		
@@ -143,8 +153,6 @@ public class SemanticCheck implements Visitor {
 	@Override
 	public void visit(FormalArg formalArg) {
 		
-		//before or after, Tom will check redeclaration
-		formalArg.type().accept(this);
 		if((formalArg.type() instanceof RefType) && className.get(refType)==null) // no definition
 			isOk= false;
 	}
@@ -152,7 +160,6 @@ public class SemanticCheck implements Visitor {
 	@Override
 	public void visit(VarDecl varDecl) {
 		
-		varDecl.type().accept(this);
 		if((varDecl.type() instanceof RefType) && className.get(refType)==null) // no definition
 			isOk= false;
 		
@@ -222,6 +229,7 @@ public class SemanticCheck implements Visitor {
 		checkType("int");
 		assignArrayStatement.rv().accept(this);
 		checkType("int");
+		
 	}
 	private void binaryOperator(BinaryExpr e, String inputType, String outputType)
 	{
@@ -307,7 +315,7 @@ public class SemanticCheck implements Visitor {
 		if(ownerClass != null) {
 			for (MethodDecl methdecl: ownerClass.methoddecls())
 			{
-				if(methdecl.name().equals(e.methodId()))//a method with such name exists in the class
+				if(methdecl.name().equals(e.methodId()))//a method with this name exists in the class
 				{
 					inClass = true;
 					parameters = methTable.get(methdecl).lookupMethods(methdecl.name()).getParameters();
@@ -353,10 +361,11 @@ public class SemanticCheck implements Visitor {
 	@Override
 	public void visit(IdentifierExpr e) {
 		SymbolTable myTable=this.VarTable.get(e);
-		if(myTable.lookupVars(e.id())==null) // no definition
+		SymbolVars definition=myTable.lookupVars(e.id());
+		if(definition==null) // no definition
 			isOk=false;
 		else
-			refType = myTable.lookupVars(e.id()).getType();
+			refType = definition.getType();
 		//(#15)
 		if (uninit.contains(e.id())) {
 			isOk = false;
