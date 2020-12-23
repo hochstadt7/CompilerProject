@@ -197,12 +197,16 @@ public class SemanticCheck implements Visitor {
 
 	@Override
 	public void visit(AssignStatement assignStatement) {
-		// We probably need to do more than that.
-		uninit.remove(assignStatement.lv());
-		String leftType = VarTable.get(assignStatement).lookupVars(assignStatement.lv()).getType();
+		SymbolDetails sym = VarTable.get(assignStatement).lookupVars(assignStatement.lv());
+		if (sym == null) {
+			isOk = false;
+			return;
+		}
+		String leftType = sym.getType();
 		assignStatement.rv().accept(this);
 		if(!IsDaughterClass(this.refType,leftType))
 			isOk=false;
+		uninit.remove(assignStatement.lv());
 	}
 
 	@Override
