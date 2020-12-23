@@ -130,6 +130,8 @@ public class SemanticCheck implements Visitor {
 		for (Statement statement : methodDecl.body()) {
 			statement.accept(this);
 		}
+		for(FormalArg formalArg: methodDecl.formals())
+			formalArg.accept(this);
 		for (VarDecl varDecl: methodDecl.vardecls()) {
 			varDecl.accept(this);
 		}
