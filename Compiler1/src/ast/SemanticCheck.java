@@ -360,7 +360,7 @@ public class SemanticCheck implements Visitor {
 
 	@Override
 	public void visit(ArrayLengthExpr e) {
-		//checking caller of length is array (#13)
+		 //checking caller of length is array (#13)
 		e.arrayExpr().accept(this);
 		if(!isOk)
 			return;
