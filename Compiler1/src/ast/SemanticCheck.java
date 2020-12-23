@@ -369,6 +369,7 @@ public class SemanticCheck implements Visitor {
 
 	@Override
 	public void visit(MethodCallExpr e) {
+		
 		String type ="";
 		ClassDecl ownerClass;
 		boolean inClass = false;
@@ -404,7 +405,7 @@ public class SemanticCheck implements Visitor {
 							expr.accept(this);
 							if(!isOk)
 								return;
-							if(refType.equals(iter.next())) {
+							if(!refType.equals(iter.next())) {
 								isOk = false; return;
 							}
 						}
@@ -415,6 +416,7 @@ public class SemanticCheck implements Visitor {
 					}
 				}
 			}
+			
 		}
 	else
 		isOk = false;
