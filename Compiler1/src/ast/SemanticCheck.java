@@ -120,28 +120,20 @@ public class SemanticCheck implements Visitor {
 		methodDecl.returnType().accept(this);
 		returnType = refType;
 		methodDecl.ret().accept(this);
-		if(!returnType.equals(refType))
-		{
+		
+		if(!IsDaughterClass(this.refType,returnType))
+			isOk = false;
+		
 			
-			
-			//if the returned value is not an object, there is no need to perform a lookup
-			if(refType.equals("int") || refType.equals("boolean") || refType.equals("int-array"))
-				isOk = false;
-			else {
-				
-				if(!IsDaughterClass(this.refType,returnType))
-					isOk = false;
-			}
-			
-		}
+		
 	}
 	
 	public boolean IsDaughterClass(String retType,String returnType) {
+		if(retType.equals(returnType))
+			return true;
 		ClassDecl classDecl=className.get(returnType);
 		if(classDecl==null)//returnType is not even a ref type
 			return false;
-		if(classDecl.name().equals(retType))// never succeed at first iteration
-			return true;
 		String parent=classDecl.superName();
 		if(parent==null)
 			return false;
@@ -207,6 +199,10 @@ public class SemanticCheck implements Visitor {
 	public void visit(AssignStatement assignStatement) {
 		// We probably need to do more than that.
 		uninit.remove(assignStatement.lv());
+		String leftType = VarTable.get(assignStatement).lookupVars(assignStatement.lv()).getType();
+		assignStatement.rv().accept(this);
+		if(!IsDaughterClass(this.refType,leftType))
+			isOk=false;
 	}
 
 	@Override
@@ -248,7 +244,7 @@ public class SemanticCheck implements Visitor {
 	@Override
 	public void visit(LtExpr e) {
 		//(#21)
-		binaryOperator(e, "int", "int");
+		binaryOperator(e, "int", "boolean");
 	}
 
 	@Override
