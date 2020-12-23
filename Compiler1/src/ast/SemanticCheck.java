@@ -33,7 +33,7 @@ public class SemanticCheck implements Visitor {
 		for(ClassDecl classDecl:program.classDecls()) {
 			String myName=classDecl.name();
 			String parentName=classDecl.superName();
-			if(className.containsKey(myName)||(parentName!=null && !(className.containsKey(parentName)))||parentName.equals(mainName)) {
+			if(className.containsKey(myName)||(parentName!=null && (!(className.containsKey(parentName))||parentName.equals(mainName)))) {
 				isOk= false; return;
 			}
 			className.put(myName, classDecl);

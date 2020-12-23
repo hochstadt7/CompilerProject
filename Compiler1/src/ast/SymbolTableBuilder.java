@@ -70,7 +70,7 @@ public class SymbolTableBuilder implements Visitor {
 			
 			classAst.put(cls,new ArrayList<SymbolTable>(Arrays.asList(this.currentSymbolTableVar,this.currentSymbolTableMeth))); /*prepare hashmaps for setSymbolTableClassHirerachy() call*/
 			classNames.put(cls.name(),new ArrayList<SymbolTable>(Arrays.asList(this.currentSymbolTableVar,this.currentSymbolTableMeth)));
-			
+			myVariables.put(cls, this.currentSymbolTableVar);
 			cls.accept(this);
 		}
 		
