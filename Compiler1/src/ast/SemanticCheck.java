@@ -13,7 +13,7 @@ public class SemanticCheck implements Visitor {
 	private HashMap<AstNode,SymbolTable> methTable;
 	Map<String,ClassDecl> className;
 	private String refType;
-	private boolean isOk;
+	public boolean isOk;
 	private Set<String> uninit;
 	
 	public SemanticCheck(SymbolTableBuilder symbolTableBuilder) {
@@ -33,12 +33,15 @@ public class SemanticCheck implements Visitor {
 		for(ClassDecl classDecl:program.classDecls()) {
 			String myName=classDecl.name();
 			String parentName=classDecl.superName();
-			if(className.containsKey(myName)||(parentName!=null && !(className.containsKey(parentName)))||parentName.equals(mainName))
-				isOk= false;
+			if(className.containsKey(myName)||(parentName!=null && !(className.containsKey(parentName)))||parentName.equals(mainName)) {
+				isOk= false; return;
+			}
 			className.put(myName, classDecl);
 		}
 		for(ClassDecl classDecl:program.classDecls()) {
 			classDecl.accept(this);
+			if(!isOk)
+				return;
 		}
 		program.mainClass().accept(this);
 	}
@@ -49,23 +52,32 @@ public class SemanticCheck implements Visitor {
 		Map<String,VarDecl> fieldName= new HashMap<String,VarDecl>();
 		for(VarDecl varDecl: classDecl.fields()) {
 			String myName=varDecl.name();
-			if(fieldName.containsKey(myName)) // redeclaration in current class
-				isOk=false;
-			if(parent!=null && parent.lookupVars(myName)!=null) // redeclaration in upper classes (possible in java, not in minijava)
-				isOk=false;
+			if(fieldName.containsKey(myName)) { // redeclaration in current class
+				isOk=false; return;
+			}
+			if(parent!=null && parent.lookupVars(myName)!=null) { // redeclaration in upper classes (possible in java, not in minijava)
+				isOk=false; return;
+			}
 			fieldName.put(myName, varDecl);
 		}
 		Map<String,MethodDecl> methodName= new HashMap<String,MethodDecl>();
 		for(MethodDecl methodDecl: classDecl.methoddecls()) {
 			String myName=methodDecl.name();
-			if(methodName.containsKey(myName)) // redeclaration in current class
-				isOk=false;
+			if(methodName.containsKey(myName)) { // redeclaration in current class
+				isOk=false; return;
+			}
 			methodName.put(myName, methodDecl);
 		}
-		for (VarDecl varDecl: classDecl.fields())
+		for (VarDecl varDecl: classDecl.fields()) {
 			varDecl.accept(this);
-		for(MethodDecl methodDecl: classDecl.methoddecls())
+			if(!isOk)
+				return;
+		}
+		for(MethodDecl methodDecl: classDecl.methoddecls()) {
 			methodDecl.accept(this);
+			if(!isOk)
+				return;
+		}
 		
 	}
 		
@@ -89,14 +101,16 @@ public class SemanticCheck implements Visitor {
 		//(#24 formal check)
 		for(FormalArg formal:methodDecl.formals())
 		{
-			if(formal_names.contains(formal.name()))
-				isOk = false;
+			if(formal_names.contains(formal.name())) {
+				isOk = false; return;
+			}
 			formal_names.add(formal.name());
 		}
 		for(VarDecl varDecl: methodDecl.vardecls()) {
 			String myName=varDecl.name();
-			if(localName.containsKey(myName)) // redeclaration in current method
-				isOk=false;
+			if(localName.containsKey(myName)) { // redeclaration in current method
+				isOk=false; return;
+			}
 			// possible that same name of local var will appear as field of class
 			localName.put(myName, varDecl);
 			uninit.add(myName);
@@ -105,35 +119,52 @@ public class SemanticCheck implements Visitor {
 		if (ancestorMethod != null)
 		{
 			methodDecl.returnType().accept(this);
-			if(!IsDaughterClass(refType,ancestorMethod.getType()))
-				isOk=false;
+			if(!IsDaughterClass(refType,ancestorMethod.getType())) {
+				isOk=false; return;
+			}
 			if(methodDecl.vardecls().size() == ancestorMethod.getParameters().size()) // same number of args
 			{
 				//arg type check
 				ListIterator<String> iter = ancestorMethod.getParameters().listIterator();
 				for(VarDecl varDecl: methodDecl.vardecls()) {
 					varDecl.type().accept(this);
-					if(!refType.equals(iter.next()))
-						isOk=false;
+					if(!isOk)
+						return;
+					
+					if(!refType.equals(iter.next())) {
+						isOk=false; return;
+					}
 				}
 			}
-			else
-				isOk=false;
+			else {
+				isOk=false; return;
+			}
 		}
 		//(#18)
 		methodDecl.returnType().accept(this);
+		if(!isOk)
+			return;
 		returnType = refType;
 		methodDecl.ret().accept(this);
-		
-		if(!IsDaughterClass(this.refType,returnType))
-			isOk = false;
+		if(!isOk)
+			return;
+		if(!IsDaughterClass(this.refType,returnType)) {
+			isOk = false; return;
+		}
 		for (Statement statement : methodDecl.body()) {
 			statement.accept(this);
+			if(!isOk)
+				return;
 		}
-		for(FormalArg formalArg: methodDecl.formals())
+		for(FormalArg formalArg: methodDecl.formals()) {
 			formalArg.accept(this);
+			if(!isOk)
+				return;
+		}
 		for (VarDecl varDecl: methodDecl.vardecls()) {
 			varDecl.accept(this);
+			if(!isOk)
+				return;
 		}
 		
 			
@@ -171,6 +202,8 @@ public class SemanticCheck implements Visitor {
 	public void visit(BlockStatement blockStatement) {
 		for (Statement s : blockStatement.statements()) {
 			s.accept(this);
+			if(!isOk)
+				return;
 		}
 	}
 
@@ -178,12 +211,20 @@ public class SemanticCheck implements Visitor {
 	public void visit(IfStatement ifStatement) {
 		//checking if condition is boolean (#17)
 		ifStatement.cond().accept(this);
+		if(!isOk)
+			return;
 		checkType("boolean");
+		if(!isOk)
+			return;
 		Set<String> elseClone = new HashSet<String>(uninit);
 		ifStatement.thencase().accept(this);
+		if(!isOk)
+			return;
 		Set<String> thenClone = new HashSet<String>(uninit);
 		uninit = elseClone;
 		ifStatement.elsecase().accept(this);
+		if(!isOk)
+			return;
 		uninit.addAll(thenClone);
 	}
 
@@ -191,9 +232,15 @@ public class SemanticCheck implements Visitor {
 	public void visit(WhileStatement whileStatement) {
 		//checking while condition is boolean (#17)
 		whileStatement.cond().accept(this);
+		if(!isOk)
+			return;
 		checkType("boolean");
+		if(!isOk)
+			return;
 		Set<String> clone = new HashSet<String>(uninit);
 		whileStatement.body().accept(this);
+		if(!isOk)
+			return;
 		uninit = clone;
 	}
 
@@ -201,6 +248,8 @@ public class SemanticCheck implements Visitor {
 	public void visit(SysoutStatement sysoutStatement) {
 		//print arg is int (#20)
 		sysoutStatement.arg().accept(this);
+		if(!isOk)
+			return;
 		checkType("int");
 	}
 
@@ -208,13 +257,15 @@ public class SemanticCheck implements Visitor {
 	public void visit(AssignStatement assignStatement) {
 		SymbolDetails sym = VarTable.get(assignStatement).lookupVars(assignStatement.lv());
 		if (sym == null) {
-			isOk = false;
-			return;
+			isOk = false; return;
 		}
 		String leftType = sym.getType();
 		assignStatement.rv().accept(this);
-		if(!IsDaughterClass(this.refType,leftType))
-			isOk=false;
+		if(!isOk)
+			return;
+		if(!IsDaughterClass(this.refType,leftType)) {
+			isOk=false; return;
+		}
 		uninit.remove(assignStatement.lv());
 	}
 
@@ -222,14 +273,22 @@ public class SemanticCheck implements Visitor {
 	public void visit(AssignArrayStatement assignArrayStatement) {
 		//(#15)
 		if (uninit.contains(assignArrayStatement.lv())) {
-			isOk = false;
+			isOk = false; return;
 		}
 		//(#23)
 		refType = VarTable.get(assignArrayStatement).lookupVars(assignArrayStatement.lv()).getType();
 		checkType("int-array");
+		if(!isOk)
+			return;
 		assignArrayStatement.index().accept(this);
+		if(!isOk)
+			return;
 		checkType("int");
+		if(!isOk)
+			return;
 		assignArrayStatement.rv().accept(this);
+		if(!isOk)
+			return;
 		checkType("int");
 		
 	}
@@ -237,10 +296,15 @@ public class SemanticCheck implements Visitor {
 	{
 		String firstType;
 		e.e1().accept(this);
+		if(!isOk)
+			return;
 		firstType = refType;
 		e.e2().accept(this);
-		if(!refType.equals(inputType) || !firstType.equals(inputType))
-			isOk = false;
+		if(!isOk)
+			return;
+		if(!refType.equals(inputType) || !firstType.equals(inputType)) {
+			isOk = false; return;
+		}
 		refType = outputType;
 	}
 	
@@ -283,8 +347,14 @@ public class SemanticCheck implements Visitor {
 	public void visit(ArrayAccessExpr e) {
 		//(#22)
 		e.arrayExpr().accept(this);
+		if(!isOk)
+			return;
 		checkType("int-array");
+		if(!isOk)
+			return;
 		e.indexExpr().accept(this);
+		if(!isOk)
+			return;
 		checkType("int");
 	}
 
@@ -292,6 +362,8 @@ public class SemanticCheck implements Visitor {
 	public void visit(ArrayLengthExpr e) {
 		//checking caller of length is array (#13)
 		e.arrayExpr().accept(this);
+		if(!isOk)
+			return;
 		checkType("int-array");
 	}
 
@@ -303,14 +375,17 @@ public class SemanticCheck implements Visitor {
 		List<String> parameters;
 		ListIterator<String> iter;
 		e.ownerExpr().accept(this);
+		if(!isOk)
+			return;
 		type = refType;
 		//checking the caller is of new, this, or identifier (#12) 
-		if(!(e.ownerExpr() instanceof NewObjectExpr || e.ownerExpr() instanceof ThisExpr || e.ownerExpr() instanceof IdentifierExpr))
-			isOk = false;
+		if(!(e.ownerExpr() instanceof NewObjectExpr || e.ownerExpr() instanceof ThisExpr || e.ownerExpr() instanceof IdentifierExpr)) {
+			isOk = false; return;
+		}
 		//checking the type of the caller is valid (#10)
 		if(type.equals("int") || type.equals("boolean") || type.equals("int-array"))
 		{
-			isOk = false;
+			isOk = false; return;
 		}
 		ownerClass = className.get(type);
 		//checking for correct method call (#11)
@@ -327,12 +402,17 @@ public class SemanticCheck implements Visitor {
 						for(Expr expr: e.actuals())//checking arg types
 						{
 							expr.accept(this);
-							if(refType.equals(iter.next()))
-								isOk = false;
+							if(!isOk)
+								return;
+							if(refType.equals(iter.next())) {
+								isOk = false; return;
+							}
 						}
 					}
-					else
+					else {
 						isOk = false;
+						return;
+					}
 				}
 			}
 		}
@@ -364,13 +444,14 @@ public class SemanticCheck implements Visitor {
 	public void visit(IdentifierExpr e) {
 		SymbolTable myTable=this.VarTable.get(e);
 		SymbolVars definition=myTable.lookupVars(e.id());
-		if(definition==null) // no definition
-			isOk=false;
+		if(definition==null) { // no definition
+			isOk=false; return;
+		}
 		else
 			refType = definition.getType();
 		//(#15)
 		if (uninit.contains(e.id())) {
-			isOk = false;
+			isOk = false; return;
 		}
 	}
 
@@ -384,6 +465,8 @@ public class SemanticCheck implements Visitor {
 	public void visit(NewIntArrayExpr e) {
 		//(#25)
 		e.lengthExpr().accept(this);
+		if(!isOk)
+			return;
 		checkType("int");
 		refType="int-array";
 		
@@ -393,14 +476,17 @@ public class SemanticCheck implements Visitor {
 	public void visit(NewObjectExpr e) {
 		
 		this.refType=e.classId();
-		if(!(className.containsKey(this.refType))) // no definition
-				isOk=false;
+		if(!(className.containsKey(this.refType))) { // no definition
+				isOk=false; return;
+		}
 		
 	}
 	@Override
 	public void visit(NotExpr e) {
 		//(#21)
 		e.e().accept(this);
+		if(!isOk)
+			return;
 		checkType("boolean");
 		refType = "boolean";
 		

@@ -33,7 +33,14 @@ public class Main {
                     outFile.write(astPrinter.getString());
 
                 } else if (action.equals("semantic")) {
-                    throw new UnsupportedOperationException("TODO - Ex. 3");
+                	SymbolTableBuilder symbolTableBuilder=new SymbolTableBuilder();
+                	prog.accept(symbolTableBuilder);
+                	SemanticCheck semanticCheck=new SemanticCheck(symbolTableBuilder);
+                	prog.accept(semanticCheck);
+                	if(semanticCheck.isOk)
+                		outFile.write("OK\n");
+                	else
+                		outFile.write("ERROR\n");
 
                 } else if (action.equals("compile")) {
                 	SymbolTableBuilder symbolTableBuilder=new SymbolTableBuilder();
