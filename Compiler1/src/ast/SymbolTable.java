@@ -49,18 +49,7 @@ public class SymbolTable {
 		}
 		return parent.lookupVars(name);
 	}
-	//used to check if a given class in an ancestor of the class represented by the symboltable
-	public boolean IsDaughterClass(String ancestorType) {
-		String res = entries.get("this").getType();
-		if (res != null) {
-			if(res.equals(ancestorType))
-				return true;
-		}
-		if (parent == null) {
-			return false;
-		}
-		return parent.IsDaughterClass(ancestorType);
-	}
+	
 	public SymbolMethods lookupMethods(String name) {
 		SymbolMethods res = (SymbolMethods) entries.get(name);
 		if (res != null) {
@@ -71,12 +60,7 @@ public class SymbolTable {
 		}
 		return parent.lookupMethods(name);
 	}
-	public SymbolMethods lookupMethodOverride(String name) {
-		if (parent == null) {
-			return null;
-		}
-		return parent.lookupMethods(name);
-	}
+	
 @Override
 public String toString() {
 		

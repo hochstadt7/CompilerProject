@@ -72,10 +72,13 @@ public class SemanticCheck implements Visitor {
 	@Override
 	public void visit(MethodDecl methodDecl) {
 		Map<String,VarDecl> localName= new HashMap<String,VarDecl>();
-		SymbolMethods ancestorMethod= methTable.get(methodDecl).lookupMethodOverride(methodDecl.name());
+		SymbolMethods ancestorMethod=null;
+		SymbolTable possibleParent=methTable.get(methodDecl).getParentSymbolTable();
+		if(possibleParent!=null)
+			ancestorMethod=possibleParent.lookupMethods(methodDecl.name());
 		Set<String> formal_names = new HashSet<String>(); 
 		uninit = new HashSet<String>();
-		String retType;
+		String returnType;
 		//(#24 formal check)
 		for(FormalArg formal:methodDecl.formals())
 		{
@@ -95,7 +98,7 @@ public class SemanticCheck implements Visitor {
 		if (ancestorMethod != null)
 		{
 			methodDecl.returnType().accept(this);
-			if(!refType.equals(ancestorMethod.getType())) // same return type
+			if(!IsDaughterClass(refType,ancestorMethod.getType()))
 				isOk=false;
 			if(methodDecl.vardecls().size() == ancestorMethod.getParameters().size()) // same number of args
 			{
@@ -115,17 +118,34 @@ public class SemanticCheck implements Visitor {
 		}
 		//(#18)
 		methodDecl.returnType().accept(this);
-		retType = refType;
+		returnType = refType;
 		methodDecl.ret().accept(this);
-		if(!retType.equals(refType))
+		if(!returnType.equals(refType))
 		{
+			
+			
 			//if the returned value is not an object, there is no need to perform a lookup
 			if(refType.equals("int") || refType.equals("boolean") || refType.equals("int-array"))
 				isOk = false;
-			else 
-				if(!VarTable.get(className.get(refType)).IsDaughterClass(retType))
+			else {
+				
+				if(!IsDaughterClass(this.refType,returnType))
 					isOk = false;
+			}
+			
 		}
+	}
+	
+	public boolean IsDaughterClass(String retType,String returnType) {
+		ClassDecl classDecl=className.get(returnType);
+		if(classDecl==null)//returnType is not even a ref type
+			return false;
+		if(classDecl.name().equals(retType))// never succeed at first iteration
+			return true;
+		String parent=classDecl.superName();
+		if(parent==null)
+			return false;
+		return IsDaughterClass(retType,parent);
 	}
 
 	@Override
@@ -228,7 +248,7 @@ public class SemanticCheck implements Visitor {
 	@Override
 	public void visit(LtExpr e) {
 		//(#21)
-		binaryOperator(e, "int", "boolean");
+		binaryOperator(e, "int", "int");
 	}
 
 	@Override
@@ -261,7 +281,7 @@ public class SemanticCheck implements Visitor {
 	@Override
 	public void visit(ArrayLengthExpr e) {
 		//checking caller of length is array (#13)
-		e.accept(this);
+		e.arrayExpr().accept(this);
 		checkType("int-array");
 	}
 
@@ -284,7 +304,7 @@ public class SemanticCheck implements Visitor {
 		}
 		ownerClass = className.get(type);
 		//checking for correct method call (#11)
-		if(ownerClass != null)
+		if(ownerClass != null) {
 			for (MethodDecl methdecl: ownerClass.methoddecls())
 			{
 				if(methdecl.name().equals(e.methodId()))//a method with such name exists in the class
@@ -305,6 +325,7 @@ public class SemanticCheck implements Visitor {
 						isOk = false;
 				}
 			}
+		}
 	else
 		isOk = false;
 	isOk = isOk && inClass;
@@ -359,8 +380,9 @@ public class SemanticCheck implements Visitor {
 
 	@Override
 	public void visit(NewObjectExpr e) {
-
-		if(!(className.containsKey(e.classId()))) // no definition
+		
+		this.refType=e.classId();
+		if(!(className.containsKey(this.refType))) // no definition
 				isOk=false;
 		
 	}

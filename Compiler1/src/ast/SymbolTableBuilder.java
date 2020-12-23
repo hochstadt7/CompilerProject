@@ -81,6 +81,7 @@ public class SymbolTableBuilder implements Visitor {
 	public void visit(ClassDecl classDecl) {
 		
 		this.classType=classDecl.name();
+		this.currentSymbolTableVar.addEntery("this", new SymbolVars(this.classType, isField));
 		this.isField=true;
 		for (VarDecl vDecl: classDecl.fields()) {
 		vDecl.accept(this);
@@ -303,7 +304,7 @@ public class SymbolTableBuilder implements Visitor {
 	@Override
 	public void visit(ThisExpr e) {
 		myVariables.put(e, currentSymbolTableVar);
-		this.currentSymbolTableVar.addEntery("this", new SymbolVars(this.classType, isField));
+		
 	}
 
 	@Override
