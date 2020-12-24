@@ -98,6 +98,11 @@ public class SemanticCheck implements Visitor {
 		Set<String> formal_names = new HashSet<String>(); 
 		uninit = new HashSet<String>();
 		String returnType;
+		
+		methodDecl.returnType().accept(this);
+		if((methodDecl.returnType() instanceof RefType)&&className.get(this.refType)==null) {
+			isOk=false; return;
+		}
 		//(#24 formal check)
 		for(FormalArg formal:methodDecl.formals())
 		{
@@ -141,13 +146,13 @@ public class SemanticCheck implements Visitor {
 			}
 		}
 		//(#18)
-		methodDecl.returnType().accept(this);
-		if(!isOk)
-			return;
+		
 		returnType = refType;
 		methodDecl.ret().accept(this);
 		if(!isOk)
 			return;
+		
+		
 		if(!IsDaughterClass(this.refType,returnType)) {
 			isOk = false; return;
 		}
@@ -421,6 +426,9 @@ public class SemanticCheck implements Visitor {
 	else
 		isOk = false;
 	isOk = isOk && inClass;
+	if(!isOk)
+		return;
+	this.refType=methTable.get(e).lookupMethods(e.methodId()).getType();//to assign refType with return type of methodid
 	}
 	
 
