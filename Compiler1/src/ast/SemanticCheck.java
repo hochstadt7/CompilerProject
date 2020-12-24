@@ -103,23 +103,6 @@ public class SemanticCheck implements Visitor {
 		if((methodDecl.returnType() instanceof RefType)&&className.get(this.refType)==null) {
 			isOk=false; return;
 		}
-		//(#24 formal check)
-		for(FormalArg formal:methodDecl.formals())
-		{
-			if(formal_names.contains(formal.name())) {
-				isOk = false; return;
-			}
-			formal_names.add(formal.name());
-		}
-		for(VarDecl varDecl: methodDecl.vardecls()) {
-			String myName=varDecl.name();
-			if(localName.containsKey(myName)) { // redeclaration in current method
-				isOk=false; return;
-			}
-			// possible that same name of local var will appear as field of class
-			localName.put(myName, varDecl);
-			uninit.add(myName);
-		}
 		//checking for correct override (#6)
 		if (ancestorMethod != null)
 		{
@@ -145,6 +128,34 @@ public class SemanticCheck implements Visitor {
 				isOk=false; return;
 			}
 		}
+		for(FormalArg formalArg: methodDecl.formals()) {
+			//(#24 formal check)
+			if(formal_names.contains(formalArg.name())) {
+				isOk = false; return;
+			}
+			formal_names.add(formalArg.name());
+			formalArg.accept(this);
+			if(!isOk)
+				return;
+		}
+		for (VarDecl varDecl: methodDecl.vardecls()) {
+			//(#24 formal check)
+			String myName=varDecl.name();
+			if(localName.containsKey(myName)) { // redeclaration in current method
+				isOk=false; return;
+			}
+			// possible that same name of local var will appear as field of class
+			localName.put(myName, varDecl);
+			uninit.add(myName);
+			varDecl.accept(this);
+			if(!isOk)
+				return;
+		}
+		for (Statement statement : methodDecl.body()) {
+			statement.accept(this);
+			if(!isOk)
+				return;
+		}
 		//(#18)
 		
 		returnType = refType;
@@ -156,24 +167,6 @@ public class SemanticCheck implements Visitor {
 		if(!IsDaughterClass(this.refType,returnType)) {
 			isOk = false; return;
 		}
-		for (Statement statement : methodDecl.body()) {
-			statement.accept(this);
-			if(!isOk)
-				return;
-		}
-		for(FormalArg formalArg: methodDecl.formals()) {
-			formalArg.accept(this);
-			if(!isOk)
-				return;
-		}
-		for (VarDecl varDecl: methodDecl.vardecls()) {
-			varDecl.accept(this);
-			if(!isOk)
-				return;
-		}
-		
-			
-		
 	}
 	
 	public boolean IsDaughterClass(String retType,String returnType) {
