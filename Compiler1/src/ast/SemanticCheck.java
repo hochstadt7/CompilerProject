@@ -100,6 +100,7 @@ public class SemanticCheck implements Visitor {
 		String returnType;
 		
 		methodDecl.returnType().accept(this);
+		returnType = refType;
 		if((methodDecl.returnType() instanceof RefType)&&className.get(this.refType)==null) {
 			isOk=false; return;
 		}
@@ -157,8 +158,6 @@ public class SemanticCheck implements Visitor {
 				return;
 		}
 		//(#18)
-		
-		returnType = refType;
 		methodDecl.ret().accept(this);
 		if(!isOk)
 			return;
