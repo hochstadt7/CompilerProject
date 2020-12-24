@@ -111,12 +111,12 @@ public class SemanticCheck implements Visitor {
 			if(!IsDaughterClass(refType,ancestorMethod.getType())) {
 				isOk=false; return;
 			}
-			if(methodDecl.vardecls().size() == ancestorMethod.getParameters().size()) // same number of args
+			if(methodDecl.formals().size() == ancestorMethod.getParameters().size()) // same number of args
 			{
 				//arg type check
 				ListIterator<String> iter = ancestorMethod.getParameters().listIterator();
-				for(VarDecl varDecl: methodDecl.vardecls()) {
-					varDecl.type().accept(this);
+				for(FormalArg formalArg: methodDecl.formals()) {
+					formalArg.type().accept(this);
 					if(!isOk)
 						return;
 					
@@ -171,26 +171,28 @@ public class SemanticCheck implements Visitor {
 	public boolean IsDaughterClass(String retType,String returnType) {
 		if(retType.equals(returnType))
 			return true;
-		ClassDecl classDecl=className.get(returnType);
-		if(classDecl==null)//returnType is not even a ref type
+		ClassDecl classDecl=className.get(retType);
+		if(classDecl==null)//retType is not even a ref type
 			return false;
 		String parent=classDecl.superName();
 		if(parent==null)
 			return false;
-		return IsDaughterClass(retType,parent);
+		return IsDaughterClass(parent,returnType);
 	}
 
 	@Override
 	public void visit(FormalArg formalArg) {
 		
-		if((formalArg.type() instanceof RefType) && className.get(refType)==null) // no definition
+		formalArg.type().accept(this);
+		if((formalArg.type() instanceof RefType) && className.get(this.refType)==null) // no definition
 			isOk= false;
 	}
 
 	@Override
 	public void visit(VarDecl varDecl) {
 		
-		if((varDecl.type() instanceof RefType) && className.get(refType)==null) // no definition
+		varDecl.type().accept(this);
+		if((varDecl.type() instanceof RefType) && className.get(this.refType)==null) // no definition
 			isOk= false;
 		
 	}
@@ -252,6 +254,7 @@ public class SemanticCheck implements Visitor {
 
 	@Override
 	public void visit(AssignStatement assignStatement) {
+		
 		SymbolDetails sym = VarTable.get(assignStatement).lookupVars(assignStatement.lv());
 		if (sym == null) {
 			isOk = false; return;
@@ -358,10 +361,12 @@ public class SemanticCheck implements Visitor {
 	@Override
 	public void visit(ArrayLengthExpr e) {
 		 //checking caller of length is array (#13)
+		
 		e.arrayExpr().accept(this);
 		if(!isOk)
 			return;
 		checkType("int-array");
+		this.refType="int";
 	}
 
 	@Override
@@ -402,7 +407,7 @@ public class SemanticCheck implements Visitor {
 							expr.accept(this);
 							if(!isOk)
 								return;
-							if(!refType.equals(iter.next())) {
+							if(!IsDaughterClass(this.refType,iter.next())) {
 								isOk = false; return;
 							}
 						}
@@ -420,7 +425,7 @@ public class SemanticCheck implements Visitor {
 	isOk = isOk && inClass;
 	if(!isOk)
 		return;
-	this.refType=methTable.get(e).lookupMethods(e.methodId()).getType();//to assign refType with return type of methodid
+	this.refType=methTable.get(ownerClass).lookupMethods(e.methodId()).getType();//to assign refType with return type of methodid
 	}
 	
 
@@ -444,6 +449,7 @@ public class SemanticCheck implements Visitor {
 
 	@Override
 	public void visit(IdentifierExpr e) {
+	
 		SymbolTable myTable=this.VarTable.get(e);
 		SymbolVars definition=myTable.lookupVars(e.id());
 		if(definition==null) { // no definition
