@@ -54,8 +54,10 @@ public class SymbolTableBuilder implements Visitor {
 		HashMap<AstNode,ArrayList<SymbolTable>> classAst=new HashMap<AstNode,ArrayList<SymbolTable>>();
 		HashMap<String,ArrayList<SymbolTable>> classNames=new HashMap<String,ArrayList<SymbolTable>>();
 		
-		if(program.mainClass()!=null) {
+		MainClass myMainClass=program.mainClass();
+		if(myMainClass!=null) {
 			program.mainClass().accept(this);
+			classNames.put(myMainClass.name(), new ArrayList<SymbolTable>(Arrays.asList(this.currentSymbolTableVar,this.currentSymbolTableMeth)));
 		}
 		
 		for (ClassDecl cls : program.classDecls()) {	

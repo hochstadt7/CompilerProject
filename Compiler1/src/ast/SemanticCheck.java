@@ -43,6 +43,10 @@ public class SemanticCheck implements Visitor {
 			if(!isOk)
 				return;
 		}
+		if(className.containsKey(mainName)) {
+			isOk= false; return;
+		}
+		// I didn't add main class to className
 		program.mainClass().accept(this);
 	}
 
@@ -374,7 +378,6 @@ public class SemanticCheck implements Visitor {
 		
 		String type ="";
 		ClassDecl ownerClass;
-		boolean inClass = false;
 		List<String> parameters;
 		ListIterator<String> iter;
 		e.ownerExpr().accept(this);
@@ -393,39 +396,33 @@ public class SemanticCheck implements Visitor {
 		ownerClass = className.get(type);
 		//checking for correct method call (#11)
 		if(ownerClass != null) {
-			for (MethodDecl methdecl: ownerClass.methoddecls())
+			SymbolTable myTable=this.methTable.get(ownerClass);
+			SymbolMethods symbolMethods=myTable.lookupMethods(e.methodId());
+			if(symbolMethods==null) {
+				isOk = false; return;
+			}
+			parameters=symbolMethods.getParameters();
+			iter = parameters.listIterator();
+			if(e.actuals().size() == parameters.size())
 			{
-				if(methdecl.name().equals(e.methodId()))//a method with this name exists in the class
+				for(Expr expr: e.actuals())//checking arg types
 				{
-					inClass = true;
-					parameters = methTable.get(methdecl).lookupMethods(methdecl.name()).getParameters();
-					iter = parameters.listIterator();
-					if(e.actuals().size() == parameters.size())
-					{
-						for(Expr expr: e.actuals())//checking arg types
-						{
-							expr.accept(this);
-							if(!isOk)
-								return;
-							if(!IsDaughterClass(this.refType,iter.next())) {
-								isOk = false; return;
-							}
-						}
-					}
-					else {
-						isOk = false;
+					expr.accept(this);
+					if(!isOk)
 						return;
+					if(!IsDaughterClass(this.refType,iter.next())) {
+						isOk = false; return;
 					}
 				}
 			}
+			else {isOk = false; return;}
 			
 		}
-	else
-		isOk = false;
-	isOk = isOk && inClass;
-	if(!isOk)
-		return;
-	this.refType=methTable.get(ownerClass).lookupMethods(e.methodId()).getType();//to assign refType with return type of methodid
+	else {
+		isOk = false; return;
+	}
+	
+	this.refType=methTable.get(ownerClass).lookupMethods(e.methodId()).getType();//to return the type returned by the call
 	}
 	
 
