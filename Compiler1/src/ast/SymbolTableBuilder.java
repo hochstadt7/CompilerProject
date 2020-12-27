@@ -37,7 +37,7 @@ public class SymbolTableBuilder implements Visitor {
 		
 		for (ClassDecl classDecl:program.classDecls()) {
 			String parentName=classDecl.superName();
-			if(parentName!=null) {	
+			if(parentName!=null&&classNames.get(parentName)!=null) {
 				classAst.get(classDecl).get(0).setParentSymbolTable(classNames.get(parentName).get(0));
 				classAst.get(classDecl).get(1).setParentSymbolTable(classNames.get(parentName).get(1));
 			}
