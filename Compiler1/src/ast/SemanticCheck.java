@@ -105,7 +105,7 @@ public class SemanticCheck implements Visitor {
 		
 		methodDecl.returnType().accept(this);
 		returnType = refType;
-		if((methodDecl.returnType() instanceof RefType)&&className.get(this.refType)==null) {
+		if((methodDecl.returnType() instanceof RefType) && className.get(this.refType)==null) {
 			isOk=false; return;
 		}
 		//checking for correct override (#6)
@@ -146,7 +146,7 @@ public class SemanticCheck implements Visitor {
 		for (VarDecl varDecl: methodDecl.vardecls()) {
 			//(#24 formal check)
 			String myName=varDecl.name();
-			if(localName.containsKey(myName)) { // redeclaration in current method
+			if(localName.containsKey(myName) || formal_names.contains(myName)) { // redeclaration in current method
 				isOk=false; return;
 			}
 			// possible that same name of local var will appear as field of class
@@ -275,13 +275,23 @@ public class SemanticCheck implements Visitor {
 
 	@Override
 	public void visit(AssignArrayStatement assignArrayStatement) {
+		SymbolTable sTable = VarTable.get(assignArrayStatement);
 		//(#15)
 		if (uninit.contains(assignArrayStatement.lv())) {
 			isOk = false; return;
 		}
 		//(#23)
-		refType = VarTable.get(assignArrayStatement).lookupVars(assignArrayStatement.lv()).getType();
-		checkType("int-array");
+		//have to check the returned value is not null
+		if(sTable.lookupVars(assignArrayStatement.lv()) != null)
+		{
+			refType = sTable.lookupVars(assignArrayStatement.lv()).getType();
+			checkType("int-array");
+		}
+		else
+		{
+			isOk = false;
+			return;
+		}
 		if(!isOk)
 			return;
 		assignArrayStatement.index().accept(this);
@@ -462,7 +472,7 @@ public class SemanticCheck implements Visitor {
 
 	@Override
 	public void visit(ThisExpr e) {
-		this.refType= VarTable.get(e).lookupVars("this").getType();
+			this.refType= VarTable.get(e).lookupVars("this").getType();
 		
 	}
 
