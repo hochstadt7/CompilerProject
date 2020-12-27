@@ -106,6 +106,7 @@ public class SymbolTableBuilder implements Visitor {
 		currMeth.setParentSymbolTable(this.ParentSymbolTableMeth);
 
 		myVariables.put(mainClass,this.currentSymbolTableVar );
+		this.currentSymbolTableVar.addEntery("this", new SymbolVars(this.classType, isField));
 		this.currentSymbolTableVar.addEntery(mainClass.argsName(), new SymbolVars("String-array", isField));
 		
 		if(mainClass.mainStatement()!=null) {
