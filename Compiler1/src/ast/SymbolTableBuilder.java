@@ -37,7 +37,7 @@ public class SymbolTableBuilder implements Visitor {
 		
 		for (ClassDecl classDecl:program.classDecls()) {
 			String parentName=classDecl.superName();
-			if(parentName!=null) {	
+			if(parentName!=null&&classNames.get(parentName)!=null) {
 				classAst.get(classDecl).get(0).setParentSymbolTable(classNames.get(parentName).get(0));
 				classAst.get(classDecl).get(1).setParentSymbolTable(classNames.get(parentName).get(1));
 			}
@@ -54,8 +54,10 @@ public class SymbolTableBuilder implements Visitor {
 		HashMap<AstNode,ArrayList<SymbolTable>> classAst=new HashMap<AstNode,ArrayList<SymbolTable>>();
 		HashMap<String,ArrayList<SymbolTable>> classNames=new HashMap<String,ArrayList<SymbolTable>>();
 		
-		if(program.mainClass()!=null) {
+		MainClass myMainClass=program.mainClass();
+		if(myMainClass!=null) {
 			program.mainClass().accept(this);
+			classNames.put(myMainClass.name(), new ArrayList<SymbolTable>(Arrays.asList(this.currentSymbolTableVar,this.currentSymbolTableMeth)));
 		}
 		
 		for (ClassDecl cls : program.classDecls()) {	
@@ -71,6 +73,7 @@ public class SymbolTableBuilder implements Visitor {
 			classAst.put(cls,new ArrayList<SymbolTable>(Arrays.asList(this.currentSymbolTableVar,this.currentSymbolTableMeth))); /*prepare hashmaps for setSymbolTableClassHirerachy() call*/
 			classNames.put(cls.name(),new ArrayList<SymbolTable>(Arrays.asList(this.currentSymbolTableVar,this.currentSymbolTableMeth)));
 			myVariables.put(cls, this.currentSymbolTableVar);
+			myMethods.put(cls, this.currentSymbolTableMeth);
 			cls.accept(this);
 		}
 		
@@ -96,11 +99,14 @@ public class SymbolTableBuilder implements Visitor {
 	public void visit(MainClass mainClass) {
 		this.classType=mainClass.name();
 		SymbolTable currVar=new SymbolTable();
-		
+		SymbolTable currMeth=new SymbolTable();
 		this.currentSymbolTableVar=currVar;
+		this.currentSymbolTableMeth=currMeth;
 		currVar.setParentSymbolTable(this.ParentSymbolTableVar);
+		currMeth.setParentSymbolTable(this.ParentSymbolTableMeth);
 
 		myVariables.put(mainClass,this.currentSymbolTableVar );
+		this.currentSymbolTableVar.addEntery("this", new SymbolVars(this.classType, isField));
 		this.currentSymbolTableVar.addEntery(mainClass.argsName(), new SymbolVars("String-array", isField));
 		
 		if(mainClass.mainStatement()!=null) {
