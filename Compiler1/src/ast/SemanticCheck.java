@@ -84,6 +84,7 @@ public class SemanticCheck implements Visitor {
 
 	@Override
 	public void visit(MainClass mainClass) {
+		uninit = new HashSet<String>();
 		mainClass.mainStatement().accept(this); // nothing else
 		
 	}
