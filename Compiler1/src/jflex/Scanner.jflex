@@ -73,11 +73,10 @@ ClassIdentifier = {UpperCase}({Letters} | {INTEGER} | _)* // does necessary star
 
 /* operators */
 <YYINITIAL> "=" { return symbol(sym.EQUAL); }
-<YYINITIAL> ">" { return symbol(sym.GT); }
 <YYINITIAL> "<" { return symbol(sym.LT); }
 <YYINITIAL> "!" { return symbol(sym.NEG); }
 <YYINITIAL> "&&" { return symbol(sym.AND); }
-<YYINITIAL> "||" { return symbol(sym.OR); }
+<YYINITIAL> "*" { return symbol(sym.MULT); }
  
  
  /* my macros */
