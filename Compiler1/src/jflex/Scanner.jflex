@@ -32,7 +32,7 @@ Identifier	 	= {Letters}({Letters} | {INTEGER} | _)*
 
 
 /* flow control */
-<YYINITIAL> "if" { return symbol(sym.IF)); }
+<YYINITIAL> "if" { return symbol(sym.IF); }
 <YYINITIAL> "else" { return symbol(sym.ELSE); }
 <YYINITIAL> "while" { return symbol(sym.WHILE); } 
 <YYINITIAL> "true" { return symbol(sym.TRUE); } 
@@ -99,7 +99,7 @@ Identifier	 	= {Letters}({Letters} | {INTEGER} | _)*
 
 <<EOF>> { 
 		if (yystate() == COMMENT2){ // comment wasn't closed
-				System.out.println("Syntax error at line "+yyline()+" of input.");
+				System.out.println("Syntax error at line "+yyline+" of input.");
 				System.exit(1);
 			}
 		else
@@ -107,6 +107,6 @@ Identifier	 	= {Letters}({Letters} | {INTEGER} | _)*
 		}
  
  /* error fallback */
-	[^]                              { System.out.println("Syntax error at line "+yyline()+" of input.");
+	[^]                              { System.out.println("Syntax error at line "+yyline+" of input.");
 				System.exit(1); }
 	

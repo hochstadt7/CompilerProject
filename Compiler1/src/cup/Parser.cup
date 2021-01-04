@@ -58,14 +58,14 @@ scan with
 /*************/
 terminal IF;
 terminal ELSE;
-terminal WHILE 
+terminal WHILE;
 terminal TRUE; 
 terminal FALSE;
 terminal EXTENDS;
 terminal SYSO;
 terminal LENGTH; 
 terminal NEW; 
-terminal NULL
+terminal NULL;
 terminal STATIC;
 terminal RETURN;
 terminal PUBLIC;
@@ -122,9 +122,9 @@ non terminal List<Expr> 		actArgsList;
 precedence left AND;
 precedence NEG;
 precedence nonassoc LT;
-precedence left PLUS MINUS
+precedence left PLUS, MINUS;
 precedence left MULT;
-precedence DOT
+precedence DOT;
 
 /************************/
 /* INITIAL NON TERMINAL */
@@ -176,7 +176,7 @@ expression		::= expression:e1 AND expression:e2		{: RESULT = new AndExpr(e1, e2)
 				  | expression:e1 LT expression:e2		{: RESULT = new LtExpr(e1, e2);				:}
 				  | expression:e1 PLUS expression:e2	{: RESULT = new AddExpr(e1, e2);			:}
 				  | expression:e1 MINUS expression:e2	{: RESULT = new SubtractExpr(e1, e2);		:}
-				  | expression:e1 MNULT expression:e2	{: RESULT = new MultExpr(e1, e2);			:}
+				  | expression:e1 MULT expression:e2	{: RESULT = new MultExpr(e1, e2);			:}
 				  | expression:e1 LC expression:d2 RC	{: RESULT = new ArrayAccessExpr(e1, e2);	:}
 				  | expression:e DOT LENGTH				{: RESULT = new ArrayLengthExpr(e);			:}
 				  | expression:e DOT IDENTIFIER:s LP optActArgsList:args RP
