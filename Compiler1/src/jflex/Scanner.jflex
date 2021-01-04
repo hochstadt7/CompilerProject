@@ -55,7 +55,7 @@ ClassIdentifier = {UpperCase}({Letters} | {INTEGER} | _)* // does necessary star
 <YYINITIAL> "this" { return symbol(sym.THIS); }
 <YYINITIAL> "int"  { return symbol(sym.INT); }
 <YYINITIAL> "boolean" { return symbol(sym.BOOLEAN); }
-<YYINITIAL> "string"  { return symbol(sym.STRING); }
+<YYINITIAL> "String"  { return symbol(sym.STRING); }
 <YYINITIAL> "void" { return symbol(sym.VOID); }
 
 /* punctuations */
