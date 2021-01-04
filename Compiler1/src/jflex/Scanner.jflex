@@ -77,7 +77,8 @@ ClassIdentifier = {UpperCase}({Letters} | {INTEGER} | _)* // does necessary star
 <YYINITIAL> "!" { return symbol(sym.NEG); }
 <YYINITIAL> "&&" { return symbol(sym.AND); }
 <YYINITIAL> "*" { return symbol(sym.MULT); }
- 
+ <YYINITIAL> "+" { return symbol(sym.PLUS); }
+ <YYINITIAL> "-" { return symbol(sym.MINUS); }
  
  /* my macros */
  <YYINITIAL> {WhiteSpace} {}
