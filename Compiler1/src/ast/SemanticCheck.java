@@ -33,6 +33,7 @@ public class SemanticCheck implements Visitor {
 		for(ClassDecl classDecl:program.classDecls()) {
 			String myName=classDecl.name();
 			String parentName=classDecl.superName();
+			//(#1 + #2 + #3)
 			if(className.containsKey(myName)||(parentName!=null && (!(className.containsKey(parentName))||parentName.equals(mainName)))) {
 				isOk= false; return;
 			}
@@ -46,24 +47,25 @@ public class SemanticCheck implements Visitor {
 		if(className.containsKey(mainName)) {
 			isOk= false; return;
 		}
-		// I didn't add main class to className
 		program.mainClass().accept(this);
 	}
 
 	@Override
 	public void visit(ClassDecl classDecl) {
 		SymbolTable parent=this.VarTable.get(classDecl).getParentSymbolTable();
+		//(#4)
 		Map<String,VarDecl> fieldName= new HashMap<String,VarDecl>();
 		for(VarDecl varDecl: classDecl.fields()) {
 			String myName=varDecl.name();
 			if(fieldName.containsKey(myName)) { // redeclaration in current class
 				isOk=false; return;
 			}
-			if(parent!=null && parent.lookupVars(myName)!=null) { // redeclaration in upper classes (possible in java, not in minijava)
+			if(parent!=null && parent.lookupVars(myName)!=null) {
 				isOk=false; return;
 			}
 			fieldName.put(myName, varDecl);
 		}
+		//(#5)
 		Map<String,MethodDecl> methodName= new HashMap<String,MethodDecl>();
 		for(MethodDecl methodDecl: classDecl.methoddecls()) {
 			String myName=methodDecl.name();
@@ -89,7 +91,7 @@ public class SemanticCheck implements Visitor {
 	@Override
 	public void visit(MainClass mainClass) {
 		uninit = new HashSet<String>();
-		mainClass.mainStatement().accept(this); // nothing else
+		mainClass.mainStatement().accept(this); // nothing else is checked in main class
 		
 	}
 
@@ -173,6 +175,7 @@ public class SemanticCheck implements Visitor {
 		}
 	}
 	
+	/*check inheritence*/
 	public boolean IsDaughterClass(String retType,String returnType) {
 		if(retType.equals(returnType))
 			return true;
@@ -189,6 +192,7 @@ public class SemanticCheck implements Visitor {
 	public void visit(FormalArg formalArg) {
 		
 		formalArg.type().accept(this);
+		//(#8)
 		if((formalArg.type() instanceof RefType) && className.get(this.refType)==null) // no definition
 			isOk= false;
 	}
@@ -197,6 +201,7 @@ public class SemanticCheck implements Visitor {
 	public void visit(VarDecl varDecl) {
 		
 		varDecl.type().accept(this);
+		//(#8)
 		if((varDecl.type() instanceof RefType) && className.get(this.refType)==null) // no definition
 			isOk= false;
 		
@@ -459,6 +464,7 @@ public class SemanticCheck implements Visitor {
 	public void visit(IdentifierExpr e) {
 	
 		SymbolTable myTable=this.VarTable.get(e);
+		//(#14)
 		SymbolVars definition=myTable.lookupVars(e.id());
 		if(definition==null) { // no definition
 			isOk=false; return;
@@ -492,6 +498,7 @@ public class SemanticCheck implements Visitor {
 	public void visit(NewObjectExpr e) {
 		
 		this.refType=e.classId();
+		//(#9)
 		if(!(className.containsKey(this.refType))) { // no definition
 				isOk=false; return;
 		}

@@ -1,86 +1,116 @@
-/***************************/
-/* FILE NAME: LEX_FILE.lex */
-/***************************/
 
-/*************/
-/* USER CODE */
-/*************/
 import java_cup.runtime.*;
 
-
-
-/******************************/
-/* DOLAR DOLAR - DON'T TOUCH! */
-/******************************/
-
 %%
-
-/************************************/
-/* OPTIONS AND DECLARATIONS SECTION */
-/************************************/
-
-/*****************************************************/
-/* Lexer is the name of the class JFlex will create. */
-/* The code will be written to the file Lexer.java.  */
-/*****************************************************/
 %class Lexer
-
-/********************************************************************/
-/* The current line number can be accessed with the variable yyline */
-/* and the current column number with the variable yycolumn.        */
-/********************************************************************/
+%public
 %line
 %column
-
-/******************************************************************/
-/* CUP compatibility mode interfaces with a CUP generated parser. */
-/******************************************************************/
 %cup
 
-/****************/
-/* DECLARATIONS */
-/****************/
-/*****************************************************************************/
-/* Code between %{ and %}, both of which must be at the beginning of a line, */
-/* will be copied verbatim (letter to letter) into the Lexer class code.     */
-/* Here you declare member variables and functions that are used inside the  */
-/* scanner actions.                                                          */
-/*****************************************************************************/
 %{
-	/*********************************************************************************/
-	/* Create a new java_cup.runtime.Symbol with information about the current token */
-	/*********************************************************************************/
+	/* code from example- recitation 11 */
 	private Symbol symbol(int type)               {return new Symbol(type, yyline, yycolumn);}
 	private Symbol symbol(int type, Object value) {return new Symbol(type, yyline, yycolumn, value);}
-
-	/*******************************************/
-	/* Enable line number extraction from main */
-	/*******************************************/
+  
 	public int getLine()    { return yyline + 1; }
 	public int getCharPos() { return yycolumn;   }
+	
 %}
 
-/***********************/
-/* MACRO DECALARATIONS */
-/***********************/
 
-/******************************/
-/* DOLAR DOLAR - DON'T TOUCH! */
-/******************************/
+LineTerminator	= \r|\n|\r\n
+WhiteSpace		= [\t ] | {LineTerminator}
+INTEGER			= 0 | [1-9][0-9]*
+LowerCase 		= [a-z]
+UpperCase 		= [A-Z]
+ID				= [a-zA-Z]
+Identifier 	= {LowerCase}({Letters} | {INTEGER} | _)* // does necessary start with Lowercase?
+ClassIdentifier = {UpperCase}({Letters} | {INTEGER} | _)* // does necessary start with Uppercase?
+
+%state COMMENT1
+%state COMMENT2
 
 %%
 
-/************************************************************/
-/* LEXER matches regular expressions to actions (Java code) */
-/************************************************************/
 
-/**************************************************************/
-/* YYINITIAL is the state at which the lexer begins scanning. */
-/* So these regular expressions will only be matched if the   */
-/* scanner is in the start state YYINITIAL.                   */
-/**************************************************************/
+/* flow control */
+<YYINITIAL> "if" { return symbol(sym.IF)); }
+<YYINITIAL> "else" { return symbol(sym.ELSE); }
+<YYINITIAL> "while" { return symbol(sym.WHILE); } 
+<YYINITIAL> "true" { return symbol(sym.TRUE); } 
+<YYINITIAL> "false" { return symbol(sym.FALSE); }
+<YYINITIAL> "extends" { return symbol(sym.EXTENDS); }
+<YYINITIAL> "System.out.println" { return symbol(sym.SYSO); }
+<YYINITIAL> "length" { return symbol(sym.LENGTH); } 
+<YYINITIAL> "new" { return  symbol(sym.NEW); } 
+<YYINITIAL> "null" { return  symbol(sym.NULL); }
+<YYINITIAL> "static" { return  symbol(sym.STATIC); }
+<YYINITIAL> "return" { return symbol(sym.RETURN); }
+<YYINITIAL> "public" { return symbol(sym.PUBLIC); }
+<YYINITIAL> "main" { return symbol(sym.MAIN); }
+<YYINITIAL> "class" { return symbol(sym.CLASS); }
 
-<YYINITIAL> {
-"public"            { return symbol(sym.PUBLIC); }
-<<EOF>>				{ return symbol(sym.EOF); }
+/* types */
+<YYINITIAL> "this" { return symbol(sym.THIS); }
+<YYINITIAL> "int"  { return symbol(sym.INT); }
+<YYINITIAL> "boolean" { return symbol(sym.BOOLEAN); }
+<YYINITIAL> "string"  { return symbol(sym.STRING); }
+<YYINITIAL> "void" { return symbol(sym.VOID); }
+
+/* punctuations */
+<YYINITIAL> ";" { return symbol(sym.SEMICOLON); }
+<YYINITIAL> "," { return symbol(sym.COMMA); }
+<YYINITIAL> "." { return symbol(sym.DOT); }
+
+/* brackets */
+<YYINITIAL> "(" { return symbol(sym.LP); }
+<YYINITIAL> ")" { return symbol(sym.RP); }
+<YYINITIAL> "[" { return symbol(sym.LC); }
+<YYINITIAL> "]" { return symbol(sym.RC); }
+<YYINITIAL> "{" { return symbol(sym.LB); }
+<YYINITIAL> "}" { return symbol(sym.RB); }
+
+/* operators */
+<YYINITIAL> "=" { return symbol(sym.EQUAL); }
+<YYINITIAL> ">" { return symbol(sym.GT); }
+<YYINITIAL> "<" { return symbol(sym.LT); }
+<YYINITIAL> "!" { return symbol(sym.NEG); }
+<YYINITIAL> "&&" { return symbol(sym.AND); }
+<YYINITIAL> "||" { return symbol(sym.OR); }
+ 
+ 
+ /* my macros */
+ <YYINITIAL> {WhiteSpace} {}
+ <YYINITIAL> {INTEGER} {return symbol(sym.NUMBER, Integer.parseInt(yytext()));}
+ <YYINITIAL> {Identifier} {return symbol(sym.IDENTIFIER, new String(yytext()));}
+ <YYINITIAL> {ClassIdentifier} { return symbol(sym.CLASS_IDENTIFIER, yytext()); } // if not needed, can be deleted
+ 
+ /* comments */
+<YYINITIAL> "//" { yybegin(COMMENT1); }
+<YYINITIAL> "/*" { yybegin(COMMENT2); }
+ 
+
+ <COMMENT1> {
+  [\n]			  		 { yybegin(YYINITIAL); }
+  [^] 							 { }
 }
+
+ <COMMENT2> {
+  "*/" 						 { yybegin(YYINITIAL); }
+  [^]						 {}
+}
+
+<<EOF>> { 
+		if (yystate() == COMMENT2){ // comment wasn't closed
+				System.out.println("Syntax error at line "+yyline()+" of input.");
+				System.exit(1);
+			}
+		else
+			return symbol(sym.EOF,"EOF"); 
+		}
+ 
+ /* error fallback */
+	[^]                              { System.out.println("Syntax error at line "+yyline()+" of input.");
+				System.exit(1); }
+	
