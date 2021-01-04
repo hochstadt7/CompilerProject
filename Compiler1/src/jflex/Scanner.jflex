@@ -22,11 +22,8 @@ import java_cup.runtime.*;
 LineTerminator	= \r|\n|\r\n
 WhiteSpace		= [\t ] | {LineTerminator}
 INTEGER			= 0 | [1-9][0-9]*
-LowerCase 		= [a-z]
-UpperCase 		= [A-Z]
-ID				= [a-zA-Z]
-Identifier 	= {LowerCase}({Letters} | {INTEGER} | _)* // does necessary start with Lowercase?
-ClassIdentifier = {UpperCase}({Letters} | {INTEGER} | _)* // does necessary start with Uppercase?
+Letters			= [a-zA-Z]
+Identifier	 	= {Letters}({Letters} | {INTEGER} | _)*
 
 %state COMMENT1
 %state COMMENT2
@@ -77,14 +74,13 @@ ClassIdentifier = {UpperCase}({Letters} | {INTEGER} | _)* // does necessary star
 <YYINITIAL> "!" { return symbol(sym.NEG); }
 <YYINITIAL> "&&" { return symbol(sym.AND); }
 <YYINITIAL> "*" { return symbol(sym.MULT); }
- <YYINITIAL> "+" { return symbol(sym.PLUS); }
- <YYINITIAL> "-" { return symbol(sym.MINUS); }
+<YYINITIAL> "+" { return symbol(sym.PLUS); }
+<YYINITIAL> "-" { return symbol(sym.MINUS); }
  
  /* my macros */
- <YYINITIAL> {WhiteSpace} {}
- <YYINITIAL> {INTEGER} {return symbol(sym.NUMBER, Integer.parseInt(yytext()));}
- <YYINITIAL> {Identifier} {return symbol(sym.IDENTIFIER, new String(yytext()));}
- <YYINITIAL> {ClassIdentifier} { return symbol(sym.CLASS_IDENTIFIER, yytext()); } // if not needed, can be deleted
+<YYINITIAL> {WhiteSpace} {}
+<YYINITIAL> {INTEGER} {return symbol(sym.NUMBER, Integer.parseInt(yytext()));}
+<YYINITIAL> {Identifier} {return symbol(sym.IDENTIFIER, new String(yytext()));}
  
  /* comments */
 <YYINITIAL> "//" { yybegin(COMMENT1); }

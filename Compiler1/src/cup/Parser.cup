@@ -56,7 +56,44 @@ scan with
 /*************/
 /* TERMINALS */
 /*************/
+terminal IF;
+terminal ELSE;
+terminal WHILE 
+terminal TRUE; 
+terminal FALSE;
+terminal EXTENDS;
+terminal SYSO;
+terminal LENGTH; 
+terminal NEW; 
+terminal NULL
+terminal STATIC;
+terminal RETURN;
 terminal PUBLIC;
+terminal MAIN;
+terminal CLASS;
+terminal THIS;
+terminal INT;
+terminal BOOLEAN;
+terminal STRING;
+terminal VOID;
+terminal SEMICOLON;
+terminal COMMA;
+terminal DOT;
+terminal LP;
+terminal RP;
+terminal LC;
+terminal RC;
+terminal LB;
+terminal RB;
+terminal EQUAL;
+terminal LT;
+terminal NEG;
+terminal AND;
+terminal MULT;
+terminal PLUS;
+terminal MINUS;
+terminal NUMBER;
+terminal IDENTIFIER;
 
 /*****************/
 /* NON TERMINALS */
