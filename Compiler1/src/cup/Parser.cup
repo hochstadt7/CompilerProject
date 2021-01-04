@@ -99,6 +99,22 @@ terminal IDENTIFIER;
 /* NON TERMINALS */
 /*****************/
 non terminal prog;
+non terminal mainClass
+non terminal classList
+non terminal classDecl
+non terminal optExtends
+non terminal varList
+non terminal varDecl
+non terminal methodList
+non terminal methodDecl
+non terminal optFormArgsList
+non terminal formArgsList
+non terminal type
+non terminal statementList
+non terminal statement
+non terminal expression
+non terminal optActArgsList
+non terminal actArgsList
 
 /***********************/
 /* OPERATOR PRECEDENCE */
@@ -113,4 +129,44 @@ start with prog;
 /* PRODUCTION RULES */
 /********************/
 
-prog            ::=     ;
+prog			::= mainClass classList;
+mainClass		::= CLASS IDENTIFIER LB PUBLIC STATIC VOID MAIN LP STRING LC RC IDENTIFIER RP LB statement RB RB;
+classList		::= classList classDecl | ;
+classDecl		::= CLASS IDENTIFIER optExtends LB varList methodList RB;
+optExtends		::= EXTENDS IDENTIFIER | ;
+varList			::= varList varDecl | ;
+varDecl			::= type IDENTIFIER SEMICOLON;
+methodList		::= methodList methlodDecl | ;
+methodDecl		::= PUBLIC type IDENTIFIER LP optFormArgsList RP LB varList statementList RETURN expression SEMICOLON RB;
+optFormArgsList	::= formArgsList | ;
+formArgsList	::= type IDENTIFIER | formArgsList COMMA type IDENTIFIER;
+type			::= INT LC RC
+				  | BOOLEAN
+				  | INT
+				  | IDENTIFIER
+statementList	::= statementList statement | ;
+statement		::= LB statementList RB
+				  | IF LP expression RP statement ELSE statement
+				  | WHILE LP expression RP statement
+				  | SYSO LP expression RP SEMICOLON
+				  | IDENTIFIER EQUAL expression SEMICOLON
+				  | IDENTIFIER LC expression RC EQUALS expression SEMICOLON;
+expression		::= expression AND expression
+				  | expression LT expression
+				  | expression PLUS expression
+				  | expression MINUS expression
+				  | expression MNULT expression
+				  | expression LC expression
+				  | expression DOT LENGTH
+				  | expression DOT IDENTIFIER LP optActArgsList RP
+				  | NUMBER
+				  | TRUE
+				  | FALSE
+				  | IDENTIFIER
+				  | THIS
+				  | NEW INT LC expression RC
+				  | NEW IDENTIFIER LP RP
+				  | NEG expression
+				  | LP expression RP
+optActArgsList	::= actArgsList | ;
+actArgsList		::= expression | actArgsList COMMA expression;
