@@ -92,33 +92,39 @@ terminal AND;
 terminal MULT;
 terminal PLUS;
 terminal MINUS;
-terminal NUMBER;
-terminal IDENTIFIER;
+terminal Integer NUMBER;
+terminal String IDENTIFIER;
 
 /*****************/
 /* NON TERMINALS */
 /*****************/
-non terminal prog;
-non terminal mainClass
-non terminal classList
-non terminal classDecl
-non terminal optExtends
-non terminal varList
-non terminal varDecl
-non terminal methodList
-non terminal methodDecl
-non terminal optFormArgsList
-non terminal formArgsList
-non terminal type
-non terminal statementList
-non terminal statement
-non terminal expression
-non terminal optActArgsList
-non terminal actArgsList
+non terminal Program			prog;
+non terminal MainClass			mainClass;
+non terminal List<ClassDecl>	classList;
+non terminal ClassDecl			classDecl;
+non terminal String 			optExtends;
+non terminal List<VarDecl>		varList;
+non terminal VarDecl			varDecl;
+non terminal List<MethodDecl>	methodList;
+non terminal MethodDecl			methodDecl;
+non terminal List<FormalArg>	optFormArgsList;
+non terminal List<FormalArg>	formArgsList;
+non terminal AstType			type;
+non terminal List<Statement>	statementList;
+non terminal Statement			statement;
+non terminal Expr				expression;
+non terminal List<Expr>			optActArgsList;
+non terminal List<Expr> 		actArgsList;
 
 /***********************/
 /* OPERATOR PRECEDENCE */
 /***********************/
+precedence left AND;
+precedence NEG;
+precedence nonassoc LT;
+precedence left MULT;
+precedence left PLUS MINUS
+precedence DOT
 
 /************************/
 /* INITIAL NON TERMINAL */
@@ -129,44 +135,62 @@ start with prog;
 /* PRODUCTION RULES */
 /********************/
 
-prog			::= mainClass classList;
-mainClass		::= CLASS IDENTIFIER LB PUBLIC STATIC VOID MAIN LP STRING LC RC IDENTIFIER RP LB statement RB RB;
-classList		::= classList classDecl | ;
-classDecl		::= CLASS IDENTIFIER optExtends LB varList methodList RB;
-optExtends		::= EXTENDS IDENTIFIER | ;
-varList			::= varList varDecl | ;
-varDecl			::= type IDENTIFIER SEMICOLON;
-methodList		::= methodList methlodDecl | ;
-methodDecl		::= PUBLIC type IDENTIFIER LP optFormArgsList RP LB varList statementList RETURN expression SEMICOLON RB;
-optFormArgsList	::= formArgsList | ;
-formArgsList	::= type IDENTIFIER | formArgsList COMMA type IDENTIFIER;
-type			::= INT LC RC
-				  | BOOLEAN
-				  | INT
-				  | IDENTIFIER
-statementList	::= statementList statement | ;
-statement		::= LB statementList RB
-				  | IF LP expression RP statement ELSE statement
-				  | WHILE LP expression RP statement
-				  | SYSO LP expression RP SEMICOLON
-				  | IDENTIFIER EQUAL expression SEMICOLON
-				  | IDENTIFIER LC expression RC EQUALS expression SEMICOLON;
-expression		::= expression AND expression
-				  | expression LT expression
-				  | expression PLUS expression
-				  | expression MINUS expression
-				  | expression MNULT expression
-				  | expression LC expression
-				  | expression DOT LENGTH
-				  | expression DOT IDENTIFIER LP optActArgsList RP
-				  | NUMBER
-				  | TRUE
-				  | FALSE
-				  | IDENTIFIER
-				  | THIS
-				  | NEW INT LC expression RC
-				  | NEW IDENTIFIER LP RP
-				  | NEG expression
-				  | LP expression RP
-optActArgsList	::= actArgsList | ;
-actArgsList		::= expression | actArgsList COMMA expression;
+prog			::= mainClass:m classList:l		{: RESULT = new Program(m, l);						:};
+mainClass		::= CLASS IDENTIFIER:name LB PUBLIC STATIC VOID MAIN LP STRING LC RC IDENTIFIER:args RP LB statement:stat RB RB
+												{:	RESULT = new MainClass(name, args, stat);		:};
+classList		::= classList:l classDecl:c		{: l.add(c); RESULT = l;							:}
+				   |							{: RESULT = new ArrayList<ClassDecl>();				:};
+classDecl		::= CLASS IDENTIFIER:name optExtends:super LB varList:vl methodList:ml RB
+												{: RESULT = new ClassDecl(name, super, vl, ml);		:};
+optExtends		::= EXTENDS IDENTIFIER:s		{: RESULT = s;										:}
+				  |								{: RESULT = null;									:};
+varList			::= varList:l varDecl:v			{: l.add(v); RESULT = l;							:}
+				  |								{: RESULT = new ArrayList<VarDecl>();				:};
+varDecl			::= type IDENTIFIER:s SEMICOLON	{: RESULT = new VarDecl(s);							:};
+methodList		::= methodList:l methlodDecl:m	{: l.add(m); RESULT = l;							:}
+				  |								{: RESULT = new ArrayList<MethodDecl>()				:};
+methodDecl		::= PUBLIC type:retT IDENTIFIER:s LP optFormArgsList:args RP LB varList:vars statementList:body RETURN expression:retE SEMICOLON RB;
+												{: RESULT = new MathodDecl(retT, s, args, vars, body, retE, lexer.getline()) :}
+optFormArgsList	::= formArgsList:l				{: RESULT = l;										:}
+				  |								{: RESULT = new ArrayList<FormalArg>();				:};
+formArgsList	::= type:t IDENTIFIER:s			{: ArrayList<FormalArg> l = new ArrayList<FormalArg>(); l.add(new FormalArg(t, s, lexer.LineNumber); RESULT = l; :}
+				  | formArgsList:l COMMA type:t IDENTIFIER:s	{: l.add(s); RESULT = l;			:};
+type			::= INT LC RC					{: RESULT = new IntArrayAstType();					:}
+				  | BOOLEAN						{: RESULT = new BoolAstType();						:}
+				  | INT							{: RESULT = new IntAstType();						:}
+				  | IDENTIFIER:s				{: RESULT = new RefType(s);							:}
+statementList	::= statementList:l statement:s	{: l.add(s); RESULT = l;							:}
+				  | 							{: RSTULT = new ArrayList<Statement>();				:};
+statement		::= LB statementList:l RB		{: RESULT = new BlockStatement(l);					:}
+				  | IF LP expression:cond RP statement:then ELSE statement:else
+				  								{: RESULT = new IfStatement(cond, then, else);		:}
+				  | WHILE LP expression:cond RP statement:body
+				  								{: RESULT = new WhileStatement(cond, body);			:}
+				  | SYSO LP expression:e RP SEMICOLON
+				  								{: RESULT = new SysoutStatement(e);					:}
+				  | IDENTIFIER:s EQUAL expression:e SEMICOLON
+				  								{: RESULT = new AssignStatement(s, e);				:}
+				  | IDENTIFIER:s LC expression:ind RC EQUALS expression:rv SEMICOLON;
+				  								{: RESULT = new AssignArrayStatement(s, ind, rv);	:};
+expression		::= expression:e1 AND expression:e2		{: RESULT = new AndExpr(e1, e2);			:}
+				  | expression:e1 LT expression:e2		{: RESULT = new LtExpr(e1, e2);				:}
+				  | expression:e1 PLUS expression:e2	{: RESULT = new AddExpr(e1, e2);			:}
+				  | expression:e1 MINUS expression:e2	{: RESULT = new SubtractExpr(e1, e2);		:}
+				  | expression:e1 MNULT expression:e2	{: RESULT = new MultExpr(e1, e2);			:}
+				  | expression:e1 LC expression:d2 RC	{: RESULT = new ArrayAccessExpr(e1, e2);	:}
+				  | expression:e DOT LENGTH				{: RESULT = new ArrayLengthExpr(e);			:}
+				  | expression:e DOT IDENTIFIER:s LP optActArgsList:args RP
+				  								{: RESULT = new MethodCallExpr(e, s, args);			:}
+				  | NUMBER:m					{: RESULT = new IntegerLiteralExpr(n);				:}
+				  | TRUE						{: RESULT = new TrueExpr();							:}
+				  | FALSE						{: RESULT = new FalseExpr();						:}
+				  | IDENTIFIER:s				{: RESULT = new IdentifierExpr(s);					:}
+				  | THIS						{: RESULT = new ThisExpr();							:}
+				  | NEW INT LC expression:l RC	{: RESULT = new NewIntArrayExpr(l);					:}
+				  | NEW IDENTIFIER:s LP RP		{: RESULT = new NewObjectExpr(s);					:}
+				  | NEG expression:e			{: RESULT = new NotExpr(e);							:}
+				  | LP expression:e RP			{: RESULT = e;										:}
+optActArgsList	::= actArgsList:l				{: RESULT = l;										:}
+				  | 							{: RESULT = new ArrayList<Expr>()					:};
+actArgsList		::= expression:e				{: ArrayList<Expr> l = new ArrayList<Expr>(); l.add(e); RESULT = l; :}
+				  | actArgsListL:l COMMA expression:e	{: l.add(e); RESULT = l;					:};
