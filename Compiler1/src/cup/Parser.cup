@@ -122,8 +122,8 @@ non terminal List<Expr> 		actArgsList;
 precedence left AND;
 precedence NEG;
 precedence nonassoc LT;
-precedence left MULT;
 precedence left PLUS MINUS
+precedence left MULT;
 precedence DOT
 
 /************************/

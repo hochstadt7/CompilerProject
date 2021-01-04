@@ -1,4 +1,6 @@
 import ast.*;
+import java_cup.Lexer;
+import java_cup.parser;
 
 import java.io.*;
 
@@ -13,7 +15,20 @@ public class Main {
             Program prog;
 
             if (inputMethod.equals("parse")) {
-                throw new UnsupportedOperationException("TODO - Ex. 4");
+            	FileReader fileReader = new FileReader(new File(filename));
+            	parser p = new parser(new Lexer(fileReader));
+            	prog=(Program)p.parse().value;
+            	
+            	/* for now, it prints out the java program, not an xml */
+            	AstPrintVisitor astPrinter = new AstPrintVisitor();
+            	prog.accept(astPrinter);
+            	var outFile = new PrintWriter(outfilename);
+            	outFile.write(astPrinter.getString());
+            	
+            	/* and this prints xml file? */
+            	/*AstXMLSerializer xmlSerializer = new AstXMLSerializer();
+                xmlSerializer.serialize(prog, outfilename);*/
+            	
             } else if (inputMethod.equals("unmarshal")) {
                 AstXMLSerializer xmlSerializer = new AstXMLSerializer();
                 prog = xmlSerializer.deserialize(new File(filename));
