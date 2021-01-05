@@ -6,13 +6,87 @@
 /** CUP generated interface containing symbol constants. */
 public interface sym {
   /* terminals */
-  public static final int error = 1;
-  public static final int PUBLIC = 2;
+  public static final int MULT = 35;
+  public static final int INT = 18;
+  public static final int MINUS = 37;
+  public static final int STATIC = 12;
+  public static final int SEMICOLON = 22;
+  public static final int AND = 34;
+  public static final int LT = 32;
+  public static final int LP = 25;
+  public static final int COMMA = 23;
+  public static final int CLASS = 16;
+  public static final int RP = 26;
+  public static final int PLUS = 36;
+  public static final int MAIN = 15;
+  public static final int IF = 2;
+  public static final int THIS = 17;
+  public static final int DOT = 24;
   public static final int EOF = 0;
+  public static final int BOOLEAN = 19;
+  public static final int LC = 27;
+  public static final int LB = 29;
+  public static final int RETURN = 13;
+  public static final int EQUAL = 31;
+  public static final int TRUE = 5;
+  public static final int NEW = 10;
+  public static final int error = 1;
+  public static final int RC = 28;
+  public static final int RB = 30;
+  public static final int NULL = 11;
+  public static final int NUMBER = 38;
+  public static final int VOID = 21;
+  public static final int NEG = 33;
+  public static final int ELSE = 3;
+  public static final int WHILE = 4;
+  public static final int PUBLIC = 14;
+  public static final int EXTENDS = 7;
+  public static final int SYSO = 8;
+  public static final int STRING = 20;
+  public static final int FALSE = 6;
+  public static final int LENGTH = 9;
+  public static final int IDENTIFIER = 39;
   public static final String[] terminalNames = new String[] {
   "EOF",
   "error",
-  "PUBLIC"
+  "IF",
+  "ELSE",
+  "WHILE",
+  "TRUE",
+  "FALSE",
+  "EXTENDS",
+  "SYSO",
+  "LENGTH",
+  "NEW",
+  "NULL",
+  "STATIC",
+  "RETURN",
+  "PUBLIC",
+  "MAIN",
+  "CLASS",
+  "THIS",
+  "INT",
+  "BOOLEAN",
+  "STRING",
+  "VOID",
+  "SEMICOLON",
+  "COMMA",
+  "DOT",
+  "LP",
+  "RP",
+  "LC",
+  "RC",
+  "LB",
+  "RB",
+  "EQUAL",
+  "LT",
+  "NEG",
+  "AND",
+  "MULT",
+  "PLUS",
+  "MINUS",
+  "NUMBER",
+  "IDENTIFIER"
   };
 }
 
