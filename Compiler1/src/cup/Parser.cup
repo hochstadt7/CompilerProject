@@ -193,4 +193,4 @@ expression		::= expression:e1 AND expression:e2		{: RESULT = new AndExpr(e1, e2)
 optActArgsList	::= actArgsList:l				{: RESULT = l;										:}
 				  | 							{: RESULT = new ArrayList<Expr>()					:};
 actArgsList		::= expression:e				{: ArrayList<Expr> l = new ArrayList<Expr>(); l.add(e); RESULT = l; :}
-				  | actArgsListL:l COMMA expression:e	{: l.add(e); RESULT = l;					:};
+				  | actArgsList:l COMMA expression:e	{: l.add(e); RESULT = l;					:};
