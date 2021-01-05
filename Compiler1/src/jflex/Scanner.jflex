@@ -41,7 +41,6 @@ Identifier	 	= {Letters}({Letters} | {INTEGER} | _)*
 <YYINITIAL> "System.out.println" { return symbol(sym.SYSO); }
 <YYINITIAL> "length" { return symbol(sym.LENGTH); } 
 <YYINITIAL> "new" { return  symbol(sym.NEW); } 
-<YYINITIAL> "null" { return  symbol(sym.NULL); }
 <YYINITIAL> "static" { return  symbol(sym.STATIC); }
 <YYINITIAL> "return" { return symbol(sym.RETURN); }
 <YYINITIAL> "public" { return symbol(sym.PUBLIC); }

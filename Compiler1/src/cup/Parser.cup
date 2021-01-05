@@ -65,7 +65,6 @@ terminal EXTENDS;
 terminal SYSO;
 terminal LENGTH; 
 terminal NEW; 
-terminal NULL;
 terminal STATIC;
 terminal RETURN;
 terminal PUBLIC;
@@ -159,7 +158,7 @@ type			::= INT LC RC					{: RESULT = new IntArrayAstType();					:}
 				  | BOOLEAN						{: RESULT = new BoolAstType();						:}
 				  | INT							{: RESULT = new IntAstType();						:}
 				  | IDENTIFIER:s				{: RESULT = new RefType(s);							:};
-statementList	::= statementList:l statement:s	{: l.add(s); RESULT = l;							:}
+statementList	::= statement:s statementList:l	{: l.add(s, 0); RESULT = l;							:}
 				  | 							{: RSTULT = new ArrayList<Statement>();				:};
 statement		::= LB statementList:l RB		{: RESULT = new BlockStatement(l);					:}
 				  | IF LP expression:cond RP statement:then ELSE statement:else
@@ -194,3 +193,4 @@ optActArgsList	::= actArgsList:l				{: RESULT = l;										:}
 				  | 							{: RESULT = new ArrayList<Expr>()					:};
 actArgsList		::= expression:e				{: ArrayList<Expr> l = new ArrayList<Expr>(); l.add(e); RESULT = l; :}
 				  | actArgsList:l COMMA expression:e	{: l.add(e); RESULT = l;					:};
+				  
