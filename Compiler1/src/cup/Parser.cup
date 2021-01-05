@@ -138,31 +138,32 @@ prog			::= mainClass:m classList:l		{: RESULT = new Program(m, l);						:};
 mainClass		::= CLASS IDENTIFIER:name LB PUBLIC STATIC VOID MAIN LP STRING LC RC IDENTIFIER:args RP LB statement:stat RB RB
 												{:	RESULT = new MainClass(name, args, stat);		:};
 classList		::= classList:l classDecl:c		{: l.add(c); RESULT = l;							:}
-				   |							{: RESULT = new ArrayList<ClassDecl>();				:};
+				   |							{: RESULT = new LinkedList<ClassDecl>();			:};
 classDecl		::= CLASS IDENTIFIER:name optExtends:ext LB varList:vl methodList:ml RB
 												{: RESULT = new ClassDecl(name, ext, vl, ml);		:};
 optExtends		::= EXTENDS IDENTIFIER:s		{: RESULT = s;										:}
 				  |								{: RESULT = null;									:};
 varList			::= varList:l varDecl:v			{: l.add(v); RESULT = l;							:}
-				  |								{: RESULT = new ArrayList<VarDecl>();				:};
-varDecl			::= type IDENTIFIER:s SEMICOLON	{: RESULT = new VarDecl(s);							:};
+				  |								{: RESULT = new LinkedList<VarDecl>();				:};
+varDecl			::= type:t IDENTIFIER:s SEMICOLON {: RESULT = new VarDecl(t, s, lexer.getLine());	:};
 methodList		::= methodList:l methodDecl:m	{: l.add(m); RESULT = l;							:}
-				  |								{: RESULT = new ArrayList<MethodDecl>()				:};
+				  |								{: RESULT = new LinkedList<MethodDecl>();			:};
 methodDecl		::= PUBLIC type:retT IDENTIFIER:s LP optFormArgsList:args RP LB varList:vars statementList:body RETURN expression:retE SEMICOLON RB
-												{: RESULT = new MethodDecl(retT, s, args, vars, body, retE, lexer.getline()); :};
+												{: RESULT = new MethodDecl(retT, s, args, vars, body, retE, lexer.getLine()); :};
 optFormArgsList	::= formArgsList:l				{: RESULT = l;										:}
-				  |								{: RESULT = new ArrayList<FormalArg>();				:};
-formArgsList	::= type:t IDENTIFIER:s			{: ArrayList<FormalArg> l = new ArrayList<FormalArg>(); l.add(new FormalArg(t, s, lexer.LineNumber); RESULT = l; :}
-				  | formArgsList:l COMMA type:t IDENTIFIER:s	{: l.add(s); RESULT = l;			:};
+				  |								{: RESULT = new LinkedList<FormalArg>();			:};
+formArgsList	::= type:t IDENTIFIER:s			{: LinkedList<FormalArg> l = new LinkedList<FormalArg>(); l.add(new FormalArg(t, s, lexer.getLine())); RESULT = l; :}
+				  | formArgsList:l COMMA type:t IDENTIFIER:s
+												{: l.add(new FormalArg(t, s, lexer.getLine())); RESULT = l; :};
 type			::= INT LC RC					{: RESULT = new IntArrayAstType();					:}
 				  | BOOLEAN						{: RESULT = new BoolAstType();						:}
 				  | INT							{: RESULT = new IntAstType();						:}
 				  | IDENTIFIER:s				{: RESULT = new RefType(s);							:};
-statementList	::= statement:s statementList:l	{: l.add(s, 0); RESULT = l;							:}
-				  | 							{: RSTULT = new ArrayList<Statement>();				:};
+statementList	::= statement:s statementList:l	{: l.add(0, s); RESULT = l;							:}
+				  | 							{: RESULT = new LinkedList<Statement>();			:};
 statement		::= LB statementList:l RB		{: RESULT = new BlockStatement(l);					:}
-				  | IF LP expression:cond RP statement:then ELSE statement:else
-				  								{: RESULT = new IfStatement(cond, then, else);		:}
+				  | IF LP expression:cond RP statement:s1 ELSE statement:s2
+				  								{: RESULT = new IfStatement(cond, s1, s2);			:}
 				  | WHILE LP expression:cond RP statement:body
 				  								{: RESULT = new WhileStatement(cond, body);			:}
 				  | SYSO LP expression:e RP SEMICOLON
@@ -176,11 +177,11 @@ expression		::= expression:e1 AND expression:e2		{: RESULT = new AndExpr(e1, e2)
 				  | expression:e1 PLUS expression:e2	{: RESULT = new AddExpr(e1, e2);			:}
 				  | expression:e1 MINUS expression:e2	{: RESULT = new SubtractExpr(e1, e2);		:}
 				  | expression:e1 MULT expression:e2	{: RESULT = new MultExpr(e1, e2);			:}
-				  | expression:e1 LC expression:d2 RC	{: RESULT = new ArrayAccessExpr(e1, e2);	:}
+				  | expression:e1 LC expression:e2 RC	{: RESULT = new ArrayAccessExpr(e1, e2);	:}
 				  | expression:e DOT LENGTH				{: RESULT = new ArrayLengthExpr(e);			:}
 				  | expression:e DOT IDENTIFIER:s LP optActArgsList:args RP
 				  								{: RESULT = new MethodCallExpr(e, s, args);			:}
-				  | NUMBER:m					{: RESULT = new IntegerLiteralExpr(n);				:}
+				  | NUMBER:n					{: RESULT = new IntegerLiteralExpr(n);				:}
 				  | TRUE						{: RESULT = new TrueExpr();							:}
 				  | FALSE						{: RESULT = new FalseExpr();						:}
 				  | IDENTIFIER:s				{: RESULT = new IdentifierExpr(s);					:}
@@ -190,7 +191,6 @@ expression		::= expression:e1 AND expression:e2		{: RESULT = new AndExpr(e1, e2)
 				  | NEG expression:e			{: RESULT = new NotExpr(e);							:}
 				  | LP expression:e RP			{: RESULT = e;										:};
 optActArgsList	::= actArgsList:l				{: RESULT = l;										:}
-				  | 							{: RESULT = new ArrayList<Expr>()					:};
-actArgsList		::= expression:e				{: ArrayList<Expr> l = new ArrayList<Expr>(); l.add(e); RESULT = l; :}
+				  | 							{: RESULT = new LinkedList<Expr>();					:};
+actArgsList		::= expression:e				{: LinkedList<Expr> l = new LinkedList<Expr>(); l.add(e); RESULT = l; :}
 				  | actArgsList:l COMMA expression:e	{: l.add(e); RESULT = l;					:};
-				  
