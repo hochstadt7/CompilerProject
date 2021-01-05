@@ -120,11 +120,11 @@ non terminal List<Expr> 		actArgsList;
 /* OPERATOR PRECEDENCE */
 /***********************/
 precedence left AND;
-precedence NEG;
+precedence right NEG;
 precedence nonassoc LT;
 precedence left PLUS, MINUS;
 precedence left MULT;
-precedence DOT;
+precedence left DOT;
 
 /************************/
 /* INITIAL NON TERMINAL */
@@ -140,17 +140,17 @@ mainClass		::= CLASS IDENTIFIER:name LB PUBLIC STATIC VOID MAIN LP STRING LC RC 
 												{:	RESULT = new MainClass(name, args, stat);		:};
 classList		::= classList:l classDecl:c		{: l.add(c); RESULT = l;							:}
 				   |							{: RESULT = new ArrayList<ClassDecl>();				:};
-classDecl		::= CLASS IDENTIFIER:name optExtends:super LB varList:vl methodList:ml RB
-												{: RESULT = new ClassDecl(name, super, vl, ml);		:};
+classDecl		::= CLASS IDENTIFIER:name optExtends:ext LB varList:vl methodList:ml RB
+												{: RESULT = new ClassDecl(name, ext, vl, ml);		:};
 optExtends		::= EXTENDS IDENTIFIER:s		{: RESULT = s;										:}
 				  |								{: RESULT = null;									:};
 varList			::= varList:l varDecl:v			{: l.add(v); RESULT = l;							:}
 				  |								{: RESULT = new ArrayList<VarDecl>();				:};
 varDecl			::= type IDENTIFIER:s SEMICOLON	{: RESULT = new VarDecl(s);							:};
-methodList		::= methodList:l methlodDecl:m	{: l.add(m); RESULT = l;							:}
+methodList		::= methodList:l methodDecl:m	{: l.add(m); RESULT = l;							:}
 				  |								{: RESULT = new ArrayList<MethodDecl>()				:};
-methodDecl		::= PUBLIC type:retT IDENTIFIER:s LP optFormArgsList:args RP LB varList:vars statementList:body RETURN expression:retE SEMICOLON RB;
-												{: RESULT = new MathodDecl(retT, s, args, vars, body, retE, lexer.getline()) :}
+methodDecl		::= PUBLIC type:retT IDENTIFIER:s LP optFormArgsList:args RP LB varList:vars statementList:body RETURN expression:retE SEMICOLON RB
+												{: RESULT = new MethodDecl(retT, s, args, vars, body, retE, lexer.getline()); :};
 optFormArgsList	::= formArgsList:l				{: RESULT = l;										:}
 				  |								{: RESULT = new ArrayList<FormalArg>();				:};
 formArgsList	::= type:t IDENTIFIER:s			{: ArrayList<FormalArg> l = new ArrayList<FormalArg>(); l.add(new FormalArg(t, s, lexer.LineNumber); RESULT = l; :}
@@ -158,7 +158,7 @@ formArgsList	::= type:t IDENTIFIER:s			{: ArrayList<FormalArg> l = new ArrayList
 type			::= INT LC RC					{: RESULT = new IntArrayAstType();					:}
 				  | BOOLEAN						{: RESULT = new BoolAstType();						:}
 				  | INT							{: RESULT = new IntAstType();						:}
-				  | IDENTIFIER:s				{: RESULT = new RefType(s);							:}
+				  | IDENTIFIER:s				{: RESULT = new RefType(s);							:};
 statementList	::= statementList:l statement:s	{: l.add(s); RESULT = l;							:}
 				  | 							{: RSTULT = new ArrayList<Statement>();				:};
 statement		::= LB statementList:l RB		{: RESULT = new BlockStatement(l);					:}
@@ -170,7 +170,7 @@ statement		::= LB statementList:l RB		{: RESULT = new BlockStatement(l);					:}
 				  								{: RESULT = new SysoutStatement(e);					:}
 				  | IDENTIFIER:s EQUAL expression:e SEMICOLON
 				  								{: RESULT = new AssignStatement(s, e);				:}
-				  | IDENTIFIER:s LC expression:ind RC EQUALS expression:rv SEMICOLON;
+				  | IDENTIFIER:s LC expression:ind RC EQUAL expression:rv SEMICOLON
 				  								{: RESULT = new AssignArrayStatement(s, ind, rv);	:};
 expression		::= expression:e1 AND expression:e2		{: RESULT = new AndExpr(e1, e2);			:}
 				  | expression:e1 LT expression:e2		{: RESULT = new LtExpr(e1, e2);				:}
@@ -189,7 +189,7 @@ expression		::= expression:e1 AND expression:e2		{: RESULT = new AndExpr(e1, e2)
 				  | NEW INT LC expression:l RC	{: RESULT = new NewIntArrayExpr(l);					:}
 				  | NEW IDENTIFIER:s LP RP		{: RESULT = new NewObjectExpr(s);					:}
 				  | NEG expression:e			{: RESULT = new NotExpr(e);							:}
-				  | LP expression:e RP			{: RESULT = e;										:}
+				  | LP expression:e RP			{: RESULT = e;										:};
 optActArgsList	::= actArgsList:l				{: RESULT = l;										:}
 				  | 							{: RESULT = new ArrayList<Expr>()					:};
 actArgsList		::= expression:e				{: ArrayList<Expr> l = new ArrayList<Expr>(); l.add(e); RESULT = l; :}
