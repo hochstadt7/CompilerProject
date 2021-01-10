@@ -3,7 +3,6 @@ import java_cup.runtime.*;
 
 %%
 %class Lexer
-%public
 %line
 %column
 %cup
@@ -23,7 +22,7 @@ LineTerminator	= \r|\n|\r\n
 WhiteSpace		= [\t ] | {LineTerminator}
 INTEGER			= 0 | [1-9][0-9]*
 Letters			= [a-zA-Z]
-Identifier	 	= {Letters}({Letters} | {INTEGER} | _)*
+Identifier	 	= {Letters}({Letters} | {INTEGER} |_)*
 
 %state COMMENT1
 %state COMMENT2
@@ -32,58 +31,68 @@ Identifier	 	= {Letters}({Letters} | {INTEGER} | _)*
 
 
 /* flow control */
-<YYINITIAL> "if" { return symbol(sym.IF); }
-<YYINITIAL> "else" { return symbol(sym.ELSE); }
-<YYINITIAL> "while" { return symbol(sym.WHILE); } 
-<YYINITIAL> "true" { return symbol(sym.TRUE); } 
-<YYINITIAL> "false" { return symbol(sym.FALSE); }
-<YYINITIAL> "extends" { return symbol(sym.EXTENDS); }
-<YYINITIAL> "System.out.println" { return symbol(sym.SYSO); }
-<YYINITIAL> "length" { return symbol(sym.LENGTH); } 
-<YYINITIAL> "new" { return  symbol(sym.NEW); } 
-<YYINITIAL> "static" { return  symbol(sym.STATIC); }
-<YYINITIAL> "return" { return symbol(sym.RETURN); }
-<YYINITIAL> "public" { return symbol(sym.PUBLIC); }
-<YYINITIAL> "main" { return symbol(sym.MAIN); }
-<YYINITIAL> "class" { return symbol(sym.CLASS); }
+<YYINITIAL>{
+<<EOF>> { 
+		if (yystate() == COMMENT2){ // comment wasn't closed
+				System.out.println("Syntax error at line "+yyline+" of input.");
+				System.exit(1);
+			}
+		else{
+			return symbol(sym.EOF,"EOF");} 
+		}
+ "if" { System.out.println("if"); return symbol(sym.IF); }
+ "else" {System.out.println("else"); return symbol(sym.ELSE); }
+ "while" {System.out.println("while"); return symbol(sym.WHILE); } 
+ "true" {System.out.println("true"); return symbol(sym.TRUE); } 
+ "false" {System.out.println("false"); return symbol(sym.FALSE); }
+ "extends" {System.out.println("extends"); return symbol(sym.EXTENDS); }
+ "System.out.println" {System.out.println("syso"); return symbol(sym.SYSO); }
+ "length" {System.out.println("length"); return symbol(sym.LENGTH); } 
+ "new" {System.out.println("new"); return  symbol(sym.NEW); } 
+ "static" {System.out.println("static"); return  symbol(sym.STATIC); }
+ "return" {System.out.println("return"); return symbol(sym.RETURN); }
+ "public" {System.out.println("public"); return symbol(sym.PUBLIC); }
+ "main" {System.out.println("main"); return symbol(sym.MAIN); }
+ "class" {System.out.println("class"); return symbol(sym.CLASS); }
 
 /* types */
-<YYINITIAL> "this" { return symbol(sym.THIS); }
-<YYINITIAL> "int"  { return symbol(sym.INT); }
-<YYINITIAL> "boolean" { return symbol(sym.BOOLEAN); }
-<YYINITIAL> "String"  { return symbol(sym.STRING); }
-<YYINITIAL> "void" { return symbol(sym.VOID); }
+ "this" {System.out.println("this"); return symbol(sym.THIS); }
+ "int"  {System.out.println("int"); return symbol(sym.INT); }
+ "boolean" {System.out.println("boolean"); return symbol(sym.BOOLEAN); }
+ "String"  {System.out.println("string"); return symbol(sym.STRING); }
+ "void" {System.out.println("void"); return symbol(sym.VOID); }
 
 /* punctuations */
-<YYINITIAL> ";" { return symbol(sym.SEMICOLON); }
-<YYINITIAL> "," { return symbol(sym.COMMA); }
-<YYINITIAL> "." { return symbol(sym.DOT); }
+ ";" {System.out.println("semicolon"); return symbol(sym.SEMICOLON); }
+ "," {System.out.println("comma"); return symbol(sym.COMMA); }
+ "." {System.out.println("dot"); return symbol(sym.DOT); }
 
 /* brackets */
-<YYINITIAL> "(" { return symbol(sym.LP); }
-<YYINITIAL> ")" { return symbol(sym.RP); }
-<YYINITIAL> "[" { return symbol(sym.LC); }
-<YYINITIAL> "]" { return symbol(sym.RC); }
-<YYINITIAL> "{" { return symbol(sym.LB); }
-<YYINITIAL> "}" { return symbol(sym.RB); }
+ "(" {System.out.println("lp"); return symbol(sym.LP); }
+ ")" {System.out.println("rp"); return symbol(sym.RP); }
+ "[" {System.out.println("lc"); return symbol(sym.LC); }
+ "]" {System.out.println("rc"); return symbol(sym.RC); }
+ "{" {System.out.println("lb"); return symbol(sym.LB); }
+ "}" {System.out.println("rb"); return symbol(sym.RB); }
 
 /* operators */
-<YYINITIAL> "=" { return symbol(sym.EQUAL); }
-<YYINITIAL> "<" { return symbol(sym.LT); }
-<YYINITIAL> "!" { return symbol(sym.NEG); }
-<YYINITIAL> "&&" { return symbol(sym.AND); }
-<YYINITIAL> "*" { return symbol(sym.MULT); }
-<YYINITIAL> "+" { return symbol(sym.PLUS); }
-<YYINITIAL> "-" { return symbol(sym.MINUS); }
+ "=" {System.out.println("equal"); return symbol(sym.EQUAL); }
+ "<" {System.out.println("lt"); return symbol(sym.LT); }
+ "!" {System.out.println("neg"); return symbol(sym.NEG); }
+ "&&" {System.out.println("and"); return symbol(sym.AND); }
+ "*" {System.out.println("mult"); return symbol(sym.MULT); }
+ "+" {System.out.println("plus"); return symbol(sym.PLUS); }
+ "-" {System.out.println("minus"); return symbol(sym.MINUS); }
  
  /* my macros */
-<YYINITIAL> {WhiteSpace} {}
-<YYINITIAL> {INTEGER} {return symbol(sym.NUMBER, Integer.parseInt(yytext()));}
-<YYINITIAL> {Identifier} {return symbol(sym.IDENTIFIER, new String(yytext()));}
+ {WhiteSpace} {}
+ {INTEGER} {System.out.println("integer"); return symbol(sym.NUMBER, Integer.parseInt(yytext()));}
+ {Identifier} {System.out.println("identifier"); return symbol(sym.IDENTIFIER, new String(yytext()));}
  
  /* comments */
-<YYINITIAL> "//" { yybegin(COMMENT1); }
-<YYINITIAL> "/*" { yybegin(COMMENT2); }
+ "//" { yybegin(COMMENT1); }
+ "/*" { yybegin(COMMENT2); }
+ }
  
 
  <COMMENT1> {
@@ -96,16 +105,5 @@ Identifier	 	= {Letters}({Letters} | {INTEGER} | _)*
   [^]						 {}
 }
 
-<<EOF>> { 
-		if (yystate() == COMMENT2){ // comment wasn't closed
-				System.out.println("Syntax error at line "+yyline+" of input.");
-				System.exit(1);
-			}
-		else
-			return symbol(sym.EOF,"EOF"); 
-		}
- 
- /* error fallback */
-	[^]                              { System.out.println("Syntax error at line "+yyline+" of input.");
-				System.exit(1); }
+
 	

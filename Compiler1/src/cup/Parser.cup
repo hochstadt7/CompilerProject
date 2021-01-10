@@ -15,6 +15,7 @@ parser code
 	{
 		super(lexer);
 		this.lexer = lexer;
+		System.out.print("hello1\n");
 	}
 	public void report_error(String message, Object info)
 	{
@@ -34,7 +35,9 @@ parser code
 /************************/
 scan with
 {:
+System.out.print("hello2\n");
 	Symbol s;
+	try{
 	s = lexer.next_token();
 	// System.out.print(s.sym);
 	// System.out.print("[");
@@ -51,6 +54,12 @@ scan with
 	// }
 	// System.out.print("\n");
 	return s;
+	}
+	catch (java.lang.Error e) {
+         System.err.print("Syntax error at line " + lexer.getLine() + " of input. Lexer\n");
+         System.exit(1);
+         return null;
+     }
 :};
 
 /*************/
@@ -134,33 +143,33 @@ start with prog;
 /* PRODUCTION RULES */
 /********************/
 
-prog			::= mainClass:m classList:l		{: RESULT = new Program(m, l);						:};
+prog			::= mainClass:m classList:l		{: System.out.println("prog"); RESULT = new Program(m, l);						:};
 mainClass		::= CLASS IDENTIFIER:name LB PUBLIC STATIC VOID MAIN LP STRING LC RC IDENTIFIER:args RP LB statement:stat RB RB
-												{:	RESULT = new MainClass(name, args, stat);		:};
-classList		::= classList:l classDecl:c		{: l.add(c); RESULT = l;							:}
-				   |							{: RESULT = new LinkedList<ClassDecl>();			:};
+												{: System.out.println("m");	RESULT = new MainClass(name, args, stat);		:};
+classList		::= classList:l classDecl:c		{: System.out.println("classlist"); l.add(c); RESULT = l;						:}
+				   |							{: System.out.println("classlist"); RESULT = new LinkedList<ClassDecl>();		:};
 classDecl		::= CLASS IDENTIFIER:name optExtends:ext LB varList:vl methodList:ml RB
 												{: RESULT = new ClassDecl(name, ext, vl, ml);		:};
 optExtends		::= EXTENDS IDENTIFIER:s		{: RESULT = s;										:}
 				  |								{: RESULT = null;									:};
-varList			::= varList:l varDecl:v			{: l.add(v); RESULT = l;							:}
-				  |								{: RESULT = new LinkedList<VarDecl>();				:};
+varList			::= varList:l varDecl:v			{: System.out.println("varlist"); l.add(v); RESULT = l;							:}
+				  |								{: System.out.println("varlist"); RESULT = new LinkedList<VarDecl>();				:};
 varDecl			::= type:t IDENTIFIER:s SEMICOLON {: RESULT = new VarDecl(t, s, lexer.getLine());	:};
-methodList		::= methodList:l methodDecl:m	{: l.add(m); RESULT = l;							:}
-				  |								{: RESULT = new LinkedList<MethodDecl>();			:};
+methodList		::= methodList:l methodDecl:m	{: System.out.println("methodlist"); l.add(m); RESULT = l;							:}
+				  |								{: System.out.println("methodlist"); RESULT = new LinkedList<MethodDecl>();			:};
 methodDecl		::= PUBLIC type:retT IDENTIFIER:s LP optFormArgsList:args RP LB varList:vars statementList:body RETURN expression:retE SEMICOLON RB
-												{: RESULT = new MethodDecl(retT, s, args, vars, body, retE, lexer.getLine()); :};
-optFormArgsList	::= formArgsList:l				{: RESULT = l;										:}
-				  |								{: RESULT = new LinkedList<FormalArg>();			:};
-formArgsList	::= type:t IDENTIFIER:s			{: LinkedList<FormalArg> l = new LinkedList<FormalArg>(); l.add(new FormalArg(t, s, lexer.getLine())); RESULT = l; :}
+												{:  RESULT = new MethodDecl(retT, s, args, vars, body, retE, lexer.getLine()); :};
+optFormArgsList	::= formArgsList:l				{: System.out.println("optformalarglist"); RESULT = l;										:}
+				  |								{: System.out.println("optformalarglist"); RESULT = new LinkedList<FormalArg>(); 			:};
+formArgsList	::= type:t IDENTIFIER:s			{: System.out.println("formalarglist"); LinkedList<FormalArg> l = new LinkedList<FormalArg>(); l.add(new FormalArg(t, s, lexer.getLine())); RESULT = l; :}
 				  | formArgsList:l COMMA type:t IDENTIFIER:s
-												{: l.add(new FormalArg(t, s, lexer.getLine())); RESULT = l; :};
+												{: System.out.println("formalarglist"); l.add(new FormalArg(t, s, lexer.getLine())); RESULT = l;  :};
 type			::= INT LC RC					{: RESULT = new IntArrayAstType();					:}
 				  | BOOLEAN						{: RESULT = new BoolAstType();						:}
 				  | INT							{: RESULT = new IntAstType();						:}
 				  | IDENTIFIER:s				{: RESULT = new RefType(s);							:};
-statementList	::= statement:s statementList:l	{: l.add(0, s); RESULT = l;							:}
-				  | 							{: RESULT = new LinkedList<Statement>();			:};
+statementList	::= statement:s statementList:l	{: System.out.println("statement"); l.add(0, s); RESULT = l;							:}
+				  | 							{: System.out.println("statement"); RESULT = new LinkedList<Statement>();			:};
 statement		::= LB statementList:l RB		{: RESULT = new BlockStatement(l);					:}
 				  | IF LP expression:cond RP statement:s1 ELSE statement:s2
 				  								{: RESULT = new IfStatement(cond, s1, s2);			:}
@@ -190,7 +199,7 @@ expression		::= expression:e1 AND expression:e2		{: RESULT = new AndExpr(e1, e2)
 				  | NEW IDENTIFIER:s LP RP		{: RESULT = new NewObjectExpr(s);					:}
 				  | NEG expression:e			{: RESULT = new NotExpr(e);							:}
 				  | LP expression:e RP			{: RESULT = e;										:};
-optActArgsList	::= actArgsList:l				{: RESULT = l;										:}
-				  | 							{: RESULT = new LinkedList<Expr>();					:};
-actArgsList		::= expression:e				{: LinkedList<Expr> l = new LinkedList<Expr>(); l.add(e); RESULT = l; :}
-				  | actArgsList:l COMMA expression:e	{: l.add(e); RESULT = l;					:};
+optActArgsList	::= actArgsList:l				{: System.out.println("optactargslist"); RESULT = l;										:}
+				  | 							{: System.out.println("optactargslist"); RESULT = new LinkedList<Expr>(); 					:};
+actArgsList		::= expression:e				{: System.out.println("actactargslist"); LinkedList<Expr> l = new LinkedList<Expr>(); l.add(e); RESULT = l;  :}
+				  | actArgsList:l COMMA expression:e	{: System.out.println("actactargslist"); l.add(e); RESULT = l;					:};

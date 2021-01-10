@@ -17,8 +17,9 @@ public class Main {
             if (inputMethod.equals("parse")) {
             	FileReader fileReader = new FileReader(new File(filename));
             	parser p = new parser(new Lexer(fileReader));
+            	System.out.println("before");
             	prog=(Program)p.parse().value;
-            	
+            	System.out.println("after");
             	/* for now, it prints out the java program, not an xml */
             	AstPrintVisitor astPrinter = new AstPrintVisitor();
             	prog.accept(astPrinter);
