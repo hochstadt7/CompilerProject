@@ -8,6 +8,8 @@ import java_cup.runtime.*;
 %cup
 
 %{
+	int currLine=0;
+
 	/* code from example- recitation 11 */
 	private Symbol symbol(int type)               {return new Symbol(type, yyline, yycolumn);}
 	private Symbol symbol(int type, Object value) {return new Symbol(type, yyline, yycolumn, value);}
@@ -32,14 +34,7 @@ Identifier	 	= {Letters}({Letters} | {INTEGER} |_)*
 
 /* flow control */
 <YYINITIAL>{
-<<EOF>> { 
-		if (yystate() == COMMENT2){ // comment wasn't closed
-				System.out.println("Syntax error at line "+yyline+" of input.");
-				System.exit(1);
-			}
-		else{
-			return symbol(sym.EOF,"EOF");} 
-		}
+
  "if" { return symbol(sym.IF); }
  "else" { return symbol(sym.ELSE); }
  "while" { return symbol(sym.WHILE); } 
@@ -91,7 +86,7 @@ Identifier	 	= {Letters}({Letters} | {INTEGER} |_)*
  
  /* comments */
  "//" { yybegin(COMMENT1); }
- "/*" { yybegin(COMMENT2); }
+ "/*" { currLine=yyline+1;  yybegin(COMMENT2); }
  }
  
 
@@ -105,5 +100,13 @@ Identifier	 	= {Letters}({Letters} | {INTEGER} |_)*
   [^]						 {}
 }
 
+<<EOF>> { 
+		if (yystate() == COMMENT2){ // comment wasn't closed
+				System.out.println("Syntax error at line "+currLine+" of input.");
+				System.exit(1);
+			}
+		else{
+			return symbol(sym.EOF,"EOF");} 
+		}
 
 	
