@@ -21,7 +21,7 @@ public class Main {
             	prog.accept(astPrinter);
             	var outFile = new PrintWriter(outfilename);
             	outFile.write(astPrinter.getString());
-            	
+            	fileReader.close();
             	/* and this prints xml file? */
             	/*AstXMLSerializer xmlSerializer = new AstXMLSerializer();
                 xmlSerializer.serialize(prog, outfilename);*/
