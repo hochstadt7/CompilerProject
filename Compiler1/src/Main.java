@@ -1,6 +1,4 @@
 import ast.*;
-//import java_cup.Lexer;
-import java_cup.parser;
 
 import java.io.*;
 
@@ -16,10 +14,11 @@ public class Main {
 
             if (inputMethod.equals("parse")) {
             	FileReader fileReader = new FileReader(new File(filename));
-            	parser p = new parser(new Lexer(fileReader));
+            	Parser p = new Parser(new Lexer(fileReader));
             	System.out.println("before");
-            	prog=(Program)p.parse().value;
+            	var parsed = p.parse();
             	System.out.println("after");
+            	prog=(Program)parsed.value;
             	/* for now, it prints out the java program, not an xml */
             	AstPrintVisitor astPrinter = new AstPrintVisitor();
             	prog.accept(astPrinter);
