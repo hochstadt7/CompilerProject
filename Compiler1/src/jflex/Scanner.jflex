@@ -40,54 +40,54 @@ Identifier	 	= {Letters}({Letters} | {INTEGER} |_)*
 		else{
 			return symbol(sym.EOF,"EOF");} 
 		}
- "if" { System.out.println("if"); return symbol(sym.IF); }
- "else" {System.out.println("else"); return symbol(sym.ELSE); }
- "while" {System.out.println("while"); return symbol(sym.WHILE); } 
- "true" {System.out.println("true"); return symbol(sym.TRUE); } 
- "false" {System.out.println("false"); return symbol(sym.FALSE); }
- "extends" {System.out.println("extends"); return symbol(sym.EXTENDS); }
- "System.out.println" {System.out.println("syso"); return symbol(sym.SYSO); }
- "length" {System.out.println("length"); return symbol(sym.LENGTH); } 
- "new" {System.out.println("new"); return  symbol(sym.NEW); } 
- "static" {System.out.println("static"); return  symbol(sym.STATIC); }
- "return" {System.out.println("return"); return symbol(sym.RETURN); }
- "public" {System.out.println("public"); return symbol(sym.PUBLIC); }
- "main" {System.out.println("main"); return symbol(sym.MAIN); }
- "class" {System.out.println("class"); return symbol(sym.CLASS); }
+ "if" { return symbol(sym.IF); }
+ "else" { return symbol(sym.ELSE); }
+ "while" { return symbol(sym.WHILE); } 
+ "true" { return symbol(sym.TRUE); } 
+ "false" { return symbol(sym.FALSE); }
+ "extends" { return symbol(sym.EXTENDS); }
+ "System.out.println" { return symbol(sym.SYSO); }
+ "length" { return symbol(sym.LENGTH); } 
+ "new" { return  symbol(sym.NEW); } 
+ "static" { return  symbol(sym.STATIC); }
+ "return" { return symbol(sym.RETURN); }
+ "public" { return symbol(sym.PUBLIC); }
+ "main" { return symbol(sym.MAIN); }
+ "class" { return symbol(sym.CLASS); }
 
 /* types */
- "this" {System.out.println("this"); return symbol(sym.THIS); }
- "int"  {System.out.println("int"); return symbol(sym.INT); }
- "boolean" {System.out.println("boolean"); return symbol(sym.BOOLEAN); }
- "String"  {System.out.println("string"); return symbol(sym.STRING); }
- "void" {System.out.println("void"); return symbol(sym.VOID); }
+ "this" { return symbol(sym.THIS); }
+ "int"  { return symbol(sym.INT); }
+ "boolean" { return symbol(sym.BOOLEAN); }
+ "String"  { return symbol(sym.STRING); }
+ "void" { return symbol(sym.VOID); }
 
 /* punctuations */
- ";" {System.out.println("semicolon"); return symbol(sym.SEMICOLON); }
- "," {System.out.println("comma"); return symbol(sym.COMMA); }
- "." {System.out.println("dot"); return symbol(sym.DOT); }
+ ";" { return symbol(sym.SEMICOLON); }
+ "," { return symbol(sym.COMMA); }
+ "." { return symbol(sym.DOT); }
 
 /* brackets */
- "(" {System.out.println("lp"); return symbol(sym.LP); }
- ")" {System.out.println("rp"); return symbol(sym.RP); }
- "[" {System.out.println("lc"); return symbol(sym.LC); }
- "]" {System.out.println("rc"); return symbol(sym.RC); }
- "{" {System.out.println("lb"); return symbol(sym.LB); }
- "}" {System.out.println("rb"); return symbol(sym.RB); }
+ "(" { return symbol(sym.LP); }
+ ")" { return symbol(sym.RP); }
+ "[" { return symbol(sym.LC); }
+ "]" { return symbol(sym.RC); }
+ "{" { return symbol(sym.LB); }
+ "}" { return symbol(sym.RB); }
 
 /* operators */
- "=" {System.out.println("equal"); return symbol(sym.EQUAL); }
- "<" {System.out.println("lt"); return symbol(sym.LT); }
- "!" {System.out.println("neg"); return symbol(sym.NEG); }
- "&&" {System.out.println("and"); return symbol(sym.AND); }
- "*" {System.out.println("mult"); return symbol(sym.MULT); }
- "+" {System.out.println("plus"); return symbol(sym.PLUS); }
- "-" {System.out.println("minus"); return symbol(sym.MINUS); }
+ "=" { return symbol(sym.EQUAL); }
+ "<" { return symbol(sym.LT); }
+ "!" { return symbol(sym.NEG); }
+ "&&" { return symbol(sym.AND); }
+ "*" { return symbol(sym.MULT); }
+ "+" { return symbol(sym.PLUS); }
+ "-" { return symbol(sym.MINUS); }
  
  /* my macros */
  {WhiteSpace} {}
- {INTEGER} {System.out.println("integer"); return symbol(sym.NUMBER, Integer.parseInt(yytext()));}
- {Identifier} {System.out.println("identifier"); return symbol(sym.IDENTIFIER, new String(yytext()));}
+ {INTEGER} { return symbol(sym.NUMBER, Integer.parseInt(yytext()));}
+ {Identifier} { return symbol(sym.IDENTIFIER, new String(yytext()));}
  
  /* comments */
  "//" { yybegin(COMMENT1); }
