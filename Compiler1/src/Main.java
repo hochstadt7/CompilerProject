@@ -16,15 +16,12 @@ public class Main {
             	FileReader fileReader = new FileReader(new File(filename));
             	Parser p = new Parser(new Lexer(fileReader));
             	prog=(Program)p.parse().value;
-            	/* for now, it prints out the java program, not an xml */
             	AstPrintVisitor astPrinter = new AstPrintVisitor();
             	prog.accept(astPrinter);
             	var outFile = new PrintWriter(outfilename);
             	outFile.write(astPrinter.getString());
             	fileReader.close();
-            	/* and this prints xml file? */
-            	/*AstXMLSerializer xmlSerializer = new AstXMLSerializer();
-                xmlSerializer.serialize(prog, outfilename);*/
+            	
             	
             } else if (inputMethod.equals("unmarshal")) {
                 AstXMLSerializer xmlSerializer = new AstXMLSerializer();
@@ -75,8 +72,6 @@ public class Main {
                     } else {
                         throw new IllegalArgumentException("unknown rename type " + type);
                     }
-                    
-                    //my add
                     
                     SymbolTableBuilder symbolTableBuilder=new SymbolTableBuilder();
                     prog.accept(symbolTableBuilder);
