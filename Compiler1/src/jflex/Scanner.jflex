@@ -102,7 +102,7 @@ Identifier	 	= {Letters}({Letters} | {INTEGER} |_)*
 
 <<EOF>> { 
 		if (yystate() == COMMENT2){ // comment wasn't closed
-				System.out.println("Syntax error at line "+currLine+" of input.");
+				System.err.println("Syntax error at line "+currLine+" of input.");
 				System.exit(1);
 			}
 		else{
