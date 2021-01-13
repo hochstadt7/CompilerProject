@@ -126,10 +126,11 @@ non terminal List<Expr> 		actArgsList;
 /* OPERATOR PRECEDENCE */
 /***********************/
 precedence left AND;
-precedence right NEG;
 precedence nonassoc LT;
 precedence left PLUS, MINUS;
 precedence left MULT;
+precedence right NEG;
+precedence nonassoc LC;
 precedence left DOT;
 
 /************************/
@@ -144,8 +145,8 @@ start with prog;
 prog			::= mainClass:m classList:l		{: RESULT = new Program(m, l);						:};
 mainClass		::= CLASS IDENTIFIER:name LB PUBLIC STATIC VOID MAIN LP STRING LC RC IDENTIFIER:args RP LB statement:stat RB RB
 												{: RESULT = new MainClass(name, args, stat);		:};
-classList		::= classList:l classDecl:c		{: l.add(c); RESULT = l;						:}
-				   |							{: RESULT = new LinkedList<ClassDecl>();		:};
+classList		::= classList:l classDecl:c		{: l.add(c); RESULT = l;							:}
+				   |							{: RESULT = new LinkedList<ClassDecl>();			:};
 classDecl		::= CLASS IDENTIFIER:name optExtends:ext LB varList:vl methodList:ml RB
 												{: RESULT = new ClassDecl(name, ext, vl, ml);		:};
 optExtends		::= EXTENDS IDENTIFIER:s		{: RESULT = s;										:}
