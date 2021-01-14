@@ -91,7 +91,7 @@ Identifier	 	= {Letters}({Letters} | {INTEGER} |_)*
  
 
  <COMMENT1> {
-  [\n]			  		 { yybegin(YYINITIAL); }
+  \r|\n|\r\n			  		 { yybegin(YYINITIAL); }
   [^] 							 { }
 }
 
