@@ -18,7 +18,7 @@ parser code
 	}
 	public void report_error(String message, Object info)
 	{
-    System.out.print("Syntax error at line " + lexer.getLine() + " of input\n");
+    System.err.print("Syntax error at line " + lexer.getLine() + " of input.\n");
 		// System.out.print("ERROR >> ");
 		// System.out.print("[");
 		// System.out.print(lexer.getLine());
@@ -54,7 +54,7 @@ scan with
 	return s;
 	}
 	catch (java.lang.Error e) {
-         System.err.print("Syntax error at line " + lexer.getLine() + " of input. Lexer\n");
+         System.err.print("Syntax error at line " + lexer.getLine() + " of input.\n");
          System.exit(1);
          return null;
      }

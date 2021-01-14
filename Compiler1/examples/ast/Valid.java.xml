@@ -2,75 +2,55 @@
 <program>
     <mainclass>
         <name>Main</name>
-        <argsName>args</argsName>
+        <argsName>a</argsName>
         <mainStatement>
             <sysout>
                 <arg>
-                    <call>
-                        <ownerExpr>
-                            <new-object>
-<classId>Example</classId>
-                            </new-object>
-                        </ownerExpr>
-                        <methodId>run</methodId>
-                        <actuals/>
-                    </call>
+                    <int-literal>
+                        <num>3</num>
+                    </int-literal>
                 </arg>
             </sysout>
         </mainStatement>
     </mainclass>
     <classdecls>
         <classdecl>
-            <name>Example</name>
+            <name>Tree</name>
             <fields>
                 <field>
-                    <lineNumber>10</lineNumber>
+                    <lineNumber>11</lineNumber>
                     <type>
-                        <int/>
+                        <ref>
+                            <id>Tree</id>
+                        </ref>
                     </type>
-                    <name>y</name>
+                    <name>left</name>
                 </field>
             </fields>
             <methoddecls>
                 <methoddecl>
                     <lineNumber>15</lineNumber>
                     <returnType>
-                        <int/>
+                        <ref>
+                            <id>Tree</id>
+                        </ref>
                     </returnType>
-                    <name>run</name>
+                    <name>getLeft</name>
                     <formals/>
                     <vardecls/>
-                    <body>
-                        <assign>
-                            <lv>y</lv>
-                            <rv>
-<int-literal>
-    <num>0</num>
-</int-literal>
-                            </rv>
-                        </assign>
-                    </body>
+                    <body/>
                     <ret>
-                        <add>
-                            <e1>
-<ref-id>
-    <id>y</id>
-</ref-id>
-                            </e1>
-                            <e2>
-<ref-id>
-    <id>y</id>
-</ref-id>
-                            </e2>
-                        </add>
+                        <ref-id>
+                            <id>left</id>
+                        </ref-id>
                     </ret>
                 </methoddecl>
                 <methoddecl>
-                    <lineNumber>20</lineNumber>
+                    <lineNumber>21</lineNumber>
                     <returnType>
                         <int/>
                     </returnType>
-                    <name>other</name>
+                    <name>fun</name>
                     <formals/>
                     <vardecls>
                         <vardecl>
@@ -92,18 +72,9 @@
                         </assign>
                     </body>
                     <ret>
-                        <subtract>
-                            <e1>
-<ref-id>
-    <id>x</id>
-</ref-id>
-                            </e1>
-                            <e2>
-<int-literal>
-    <num>1</num>
-</int-literal>
-                            </e2>
-                        </subtract>
+                        <ref-id>
+                            <id>x</id>
+                        </ref-id>
                     </ret>
                 </methoddecl>
             </methoddecls>
